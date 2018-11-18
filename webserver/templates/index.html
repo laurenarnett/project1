@@ -1,6 +1,6 @@
 <html>
   <style>
-    body{ 
+    body{
       font-size: 15pt;
       font-family: arial;
     }
@@ -8,21 +8,26 @@
 
 
 <body>
-  <h1>Some famous Computer Scientists</h1>
-  <div>{{data}}</div>
+  <h1>Saffron</h1>
 
   <div>
-    {% for n in data %}
-    <div>{{n}}</div>
-    {% endfor %}
+    <form method="GET" action="#">
+       <input type="text" name="query"> <input type="submit" value="Search">
+    </form>
   </div>
 
-<p><a href="/another">Go to the other page</a></p>
-
-<form method="POST" action="/add">
-<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-</form>
-
+  {% if subscription_feed %}
+  <div>
+    {% for recipe in subscription_feed %}
+      {% include 'recipe_card.html' %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div>
+    {% for recipe in recipes %}
+      {% include 'recipe_card.html' %}
+    {% endfor %}
+  </div>
 </body>
 
 
