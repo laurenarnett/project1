@@ -1,5 +1,5 @@
 <div>
-  <h3><a href='#'>{{recipe.recipe_name}}</a></h3>
+    <h3><a href={{'/recipe_page/' + recipe.recipe_name.replace(" ","_")}}>{{recipe.recipe_name}}</a></h3>
   <p>Published by <a href='#'>{{recipe.publisher_username}}</a> on {{recipe.date_published}}</p>
   <p>{{recipe.cuisine_type}}, {{recipe.meal_type}}</p>
   {% if dietary_restriction %}

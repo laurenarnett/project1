@@ -63,6 +63,21 @@ def index():
 
   return render_template("index.html", **context)
 
+@app.route('/recipe_page/<name>')
+def recipe_page(name):
+  context = dict()
+  cursor = g.conn.execute("SELECT l.unit, l.quantity, l.ingredient_name, r.*\
+            from ingredients_list l inner join recipes r on\
+            r.recipe_name=l.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
+  recipe_data = []
+  for result in cursor:
+    recipe_data.append(result)
+  cursor.close()
+  context['recipe_data'] = recipe_data
+
+  return render_template('recipe_page.html', **context)
+
+
 if __name__ == "__main__":
   import click
 
