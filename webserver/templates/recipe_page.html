@@ -10,19 +10,25 @@
     </head>
 
 <body>
-    <h1>{{recipe_data[0].recipe_name}}</h1>
+    <h1>{{recipe_data.recipe_name}}</h1>
     
     
 <div>
-  <p>Published by <a href='#'>{{recipe_data[0].publisher_username}}</a> on {{recipe_data[0].date_published}}</p>
-  <p>{{recipe_data[0].cuisine_type}}, {{recipe_data[0].meal_type}}</p>
-  {% if dietary_restriction %}
-  <p>{{recipe_data[0].dietary_restriction}}</p>
+  <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}}</p>
+  <p>{{recipe_data.cuisine_type}}, {{recipe_data.meal_type}}</p>
+  {% if recipe_data.dietary_restriction %}
+  <p>{{recipe_data.dietary_restriction}}</p>
   {% endif %}
   <div>
     <h2>Ingredients</h2>
-    {% for recipe in recipe_data %}
-    <p>{{recipe.ingredient_name}}</p>
+    {% for ingredient in ingredients_data %}
+    <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
+    {% endfor %}
+  </div>
+  <div>
+    <h2>Reviews</h2>
+    {% for review in reviews %}
+      {% include 'review_card.html' %}
     {% endfor %}
   </div>
 </div>

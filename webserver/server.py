@@ -66,14 +66,33 @@ def index():
 @app.route('/recipe_page/<name>')
 def recipe_page(name):
   context = dict()
-  cursor = g.conn.execute("SELECT l.unit, l.quantity, l.ingredient_name, r.*\
+
+  # get recipe data
+  cursor = g.conn.execute("SELECT * from recipes WHERE recipe_name = '" + name.replace("_", " ") + "'")
+  recipe_data = cursor.fetchone()
+  cursor.close()
+
+  # get ingredients data
+  cursor = g.conn.execute("SELECT l.*\
             from ingredients_list l inner join recipes r on\
             r.recipe_name=l.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
-  recipe_data = []
+  ingredients_data = []
   for result in cursor:
-    recipe_data.append(result)
+    ingredients_data.append(result)
   cursor.close()
+  
+  # get reviews data
+  cursor = g.conn.execute("SELECT rev.* FROM reviews rev \
+            INNER JOIN recipes r on\
+            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
+  reviews = []
+  for result in cursor:
+      reviews.append(result)
+  cursor.close()
+
   context['recipe_data'] = recipe_data
+  context['ingredients_data'] = ingredients_data
+  context['reviews'] = reviews
 
   return render_template('recipe_page.html', **context)
 
