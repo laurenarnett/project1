@@ -1,0 +1,47 @@
+<html>
+    <head>
+      <style>
+        body{
+          font-size: 12pt;
+          font-family: arial;
+        }
+      </style>
+
+    </head>
+
+<body>
+    <h1>{{recipe_data.recipe_name}}</h1>
+    
+    
+<div>
+  <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}}</p>
+  <p>{{recipe_data.cuisine_type}}, {{recipe_data.meal_type}}</p>
+  {% if recipe_data.dietary_restriction %}
+  <p>{{recipe_data.dietary_restriction}}</p>
+  {% endif %}
+  <div>
+    <h2>Ingredients</h2>
+    {% for ingredient in ingredients_data %}
+    <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
+    {% endfor %}
+  </div>
+  <div>
+    <form method="POST" action="/addreview">
+      <h2>Write a review</h2> 
+      <p>Rating (1-10): <input type="number" name="rating" min="1" max="10" step="1"></p>
+      <p>Review: <input type="text" name="review">
+
+      <!-- TODO: change value to login username -->
+      <input type="hidden" name="author_username" value="lba2138">
+      <input type="hidden" name="recipe_name" value="{{recipe_data.recipe_name}}">
+
+      <input type="submit" value="Add"></p>
+    </form>
+    <h2>Reviews</h2>
+    {% for review in reviews %}
+      {% include 'review_card.html' %}
+    {% endfor %}
+  </div>
+</div>
+
+</body>
