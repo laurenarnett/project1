@@ -109,7 +109,7 @@ def addreview():
             + review + "'," + str(rating) + ",'" + date_published + "','"\
             + author_username + "','" + recipe_name + "')"
   g.conn.execute(text(cmd))
-  return redirect('/')
+  return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
 
 if __name__ == "__main__":
   import click
