@@ -1,0 +1,32 @@
+<html>
+    <head>
+      <style>
+        body{
+          font-size: 12pt;
+          font-family: arial;
+        }
+      </style>
+     </head>
+
+ <header>
+    <h1><a href='/'>Saffron</a></h1>
+    <p style="text-align:left;"><a href='#'>Publish new recipe</a>
+    <span style="float:right;"><a href='#'>Account Settings</a></span> </p>
+ </header>
+ <body>
+    <h1>{{user_info.name}}</h1>
+    <h2>{{user_info.username}}</h2>
+    <div>
+        <h2>Published Recipes</h2>
+        {% for recipe in recipes %}
+          {% include 'recipe_card.html' %}
+        {% endfor %}
+    </div>
+    <div>
+        <h2>Bookmarked Recipes</h2>
+        {% for recipe in bookmarks %}
+          {% include 'recipe_card.html' %}
+        {% endfor %}
+    </div>
+
+ </body>
