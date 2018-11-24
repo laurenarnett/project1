@@ -63,6 +63,37 @@ def index():
 
   return render_template("index.html", **context)
 
+@app.route('/profile/<name>')
+def profile(name):
+  context = dict()
+
+  # get user information
+  cursor = g.conn.execute("SELECT name,username FROM users WHERE username='" + name + "'")
+  user_info = cursor.fetchone()
+  cursor.close()
+  
+  # get recipes this user has published
+  cursor = g.conn.execute("SELECT * FROM recipes WHERE publisher_username='" + name + "'")
+  recipes = []
+  for result in cursor:
+      recipes.append(result)
+  cursor.close()
+
+  cursor = g.conn.execute("SELECT r.* FROM recipes r INNER JOIN bookmarks b\
+                            ON r.recipe_name = b.recipe_name WHERE b.username='" + name + "'")
+  bookmarks = []
+  for result in cursor:
+      bookmarks.append(result)
+  cursor.close()
+
+  context['user_info'] = user_info
+  context['recipes'] = recipes
+  context['bookmarks'] = bookmarks
+  print(bookmarks)
+
+  return render_template("profile.html", **context)
+
+
 if __name__ == "__main__":
   import click
 
