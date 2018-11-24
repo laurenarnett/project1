@@ -26,6 +26,17 @@
     {% endfor %}
   </div>
   <div>
+    <form method="POST" action="/addreview">
+      <h2>Write a review</h2> 
+      <p>Rating (1-10): <input type="number" name="rating" min="1" max="10" step="1"></p>
+      <p>Review: <input type="text" name="review">
+
+      <!-- TODO: change value to login username -->
+      <input type="hidden" name="author_username" value="lba2138">
+      <input type="hidden" name="recipe_name" value="{{recipe_data.recipe_name}}">
+
+      <input type="submit" value="Add"></p>
+    </form>
     <h2>Reviews</h2>
     {% for review in reviews %}
       {% include 'review_card.html' %}

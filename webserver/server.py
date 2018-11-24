@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 import os
+import datetime
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
@@ -96,6 +97,19 @@ def recipe_page(name):
 
   return render_template('recipe_page.html', **context)
 
+@app.route('/addreview', methods=['POST'])
+def addreview():
+  review = request.form['review']
+  rating = request.form['rating']
+  author_username = request.form['author_username']
+  recipe_name = request.form['recipe_name']
+  date_published = datetime.datetime.today().strftime('%Y-%m-%d')
+
+  cmd = "INSERT INTO reviews VALUES ('" \
+            + review + "'," + str(rating) + ",'" + date_published + "','"\
+            + author_username + "','" + recipe_name + "')"
+  g.conn.execute(text(cmd))
+  return redirect('/')
 
 if __name__ == "__main__":
   import click
