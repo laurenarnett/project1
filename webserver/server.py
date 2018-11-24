@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 import os
+import datetime
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
@@ -63,6 +64,7 @@ def index():
 
   return render_template("index.html", **context)
 
+
 @app.route('/profile/<name>')
 def profile(name):
   context = dict()
@@ -91,6 +93,54 @@ def profile(name):
   context['bookmarks'] = bookmarks
 
   return render_template("profile.html", **context)
+
+
+@app.route('/recipe_page/<name>')
+def recipe_page(name):
+  context = dict()
+
+  # get recipe data
+  cursor = g.conn.execute("SELECT * from recipes WHERE recipe_name = '" + name.replace("_", " ") + "'")
+  recipe_data = cursor.fetchone()
+  cursor.close()
+
+  # get ingredients data
+  cursor = g.conn.execute("SELECT l.*\
+            from ingredients_list l inner join recipes r on\
+            r.recipe_name=l.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
+  ingredients_data = []
+  for result in cursor:
+    ingredients_data.append(result)
+  cursor.close()
+  
+  # get reviews data
+  cursor = g.conn.execute("SELECT rev.* FROM reviews rev \
+            INNER JOIN recipes r on\
+            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
+  reviews = []
+  for result in cursor:
+      reviews.append(result)
+  cursor.close()
+
+  context['recipe_data'] = recipe_data
+  context['ingredients_data'] = ingredients_data
+  context['reviews'] = reviews
+
+  return render_template('recipe_page.html', **context)
+
+@app.route('/addreview', methods=['POST'])
+def addreview():
+  review = request.form['review']
+  rating = request.form['rating']
+  author_username = request.form['author_username']
+  recipe_name = request.form['recipe_name']
+  date_published = datetime.datetime.today().strftime('%Y-%m-%d')
+
+  cmd = "INSERT INTO reviews VALUES ('" \
+            + review + "'," + str(rating) + ",'" + date_published + "','"\
+            + author_username + "','" + recipe_name + "')"
+  g.conn.execute(text(cmd))
+  return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
 
 
 if __name__ == "__main__":
