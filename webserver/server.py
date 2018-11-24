@@ -89,7 +89,6 @@ def profile(name):
   context['user_info'] = user_info
   context['recipes'] = recipes
   context['bookmarks'] = bookmarks
-  print(bookmarks)
 
   return render_template("profile.html", **context)
 
