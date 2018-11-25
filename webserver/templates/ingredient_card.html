@@ -1,25 +1,5 @@
-<style>
-  .inv {
-    display: none;
-  }
-</style>
-
-<script>
-document.getElementById("target").addEventListener('change', function () { 
-        'use strict';
-	var vis = document.querySelector('.vis'),
-		target = document.getElementById(this.value);
-	if (vis !== null) {
-		vis.className = 'inv';
-	}
-	if (target !== null ) {
-		target.className = 'vis';
-	}
-});
-</script>
-
 <div>
-  <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
+  <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}
   {% if conversions %}
       <div>
           <select id="target">
@@ -30,8 +10,5 @@ document.getElementById("target").addEventListener('change', function () {
         </select>
       </div>
   {% endif %}
-
-    <div id="content_1" class="inv">Content 1</div>
-    <div id="content_2" class="inv">Content 2</div>
-    <div id="content_3" class="inv">Content 3</div>
+  </p>
 </div>
