@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 import os
 import datetime
+import re
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, session
@@ -73,10 +74,34 @@ def index():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
   if request.method == 'POST':
-    # attempt signup
-    # TODO: check if username exists
-    # TODO: check if email is valid
-    # TODO: check if zipcode is valid
+    name = request.form['name']
+    username = request.form['username']
+    password = request.form['password']
+    email = request.form['email']
+    dietary_restriction = request.form['dietary_restriction']
+    zipcode = request.form['zipcode']
+    # check if username exists
+    cursor = g.conn.execute("SELECT username FROM users WHERE username='{}';".format(username))
+    if cursor.rowcount != 0:
+      return render_template("signup.html", error="Signup fail. Username already exists.")
+    cursor.close()
+    # check if dietary_restriction is valid
+    if dietary_restriction not in set(['none', 'vegan', 'vegetarian']):
+      return render_template("signup.html", error="Signup fail. Invalid dietary restriction.")
+    # check if email is valid
+    if not re.match(r"[a-zA-Z0-9._\-+]+@[A-Za-z0-9-]+\.[a-z]+", email):
+      return render_template("signup.html", error="Signup fail. Invalid email.")
+    # check if zipcode is valid
+    if not zipcode.isdigit() or len(zipcode) > 5:
+      return render_template("signup.html", error="Signup fail. Invalid zipcode.")
+
+    # sign up and login
+    g.conn.execute(
+      "INSERT INTO users(name, username, email, password, dietary_restriction, zip_code)\
+       values ('{}','{}','{}','{}','{}','{}');".format(\
+        name, username, email, password, dietary_restriction, zipcode)
+    )
+    session['logged_in_as'] = username
     return redirect("/")
   else:
     return render_template("signup.html")
@@ -84,13 +109,14 @@ def signup():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
   if request.method == 'POST':
-    # attempt login
     username = request.form['username']
     password = request.form['password']
     cursor = g.conn.execute("SELECT username, password FROM users WHERE username='{}' and password='{}';".format(username, password))
     if cursor.rowcount == 0:
       return render_template("login.html", error="Login fail. Please try again.")
+    cursor.close()
 
+    # log in
     session['logged_in_as'] = username
     return redirect("/")
   else:
