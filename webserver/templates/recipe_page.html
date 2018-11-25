@@ -22,7 +22,9 @@
   <div>
     <h2>Ingredients</h2>
     {% for ingredient in ingredients_data %}
-      {% include 'ingredient_card.html' %}
+      {% with conversions = conversions[ingredient.ingredient_name] %} 
+        {% include 'ingredient_card.html' %}
+      {% endwith %}
     {% endfor %}
   </div>
   <div>

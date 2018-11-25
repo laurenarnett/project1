@@ -98,6 +98,7 @@ def profile(name):
 @app.route('/recipe_page/<name>')
 def recipe_page(name):
   context = dict()
+  context['conversions'] = dict()
 
   # get recipe data
   cursor = g.conn.execute("SELECT * from recipes WHERE recipe_name = '" + name.replace("_", " ") + "'")
@@ -111,6 +112,26 @@ def recipe_page(name):
   ingredients_data = []
   for result in cursor:
     ingredients_data.append(result)
+    
+    # count has no valid conversions
+    if result.unit == 'count':
+        continue
+
+    # make vaild conversions for this ingredient
+    name = result.ingredient_name
+    unit = result.unit
+    quantity = result.quantity
+    conversions_list = []
+    convert_cursor = g.conn.execute(text("SELECT c.*, " + str(quantity) + "* c.multiplier AS res \
+        FROM conversions c WHERE\
+        ingredient_name LIKE (CASE WHEN ('" + name + "' = 'water' OR '" + name\
+        + "' = 'flour' OR '" + name + "' = 'sugar' OR '" + name + "' = 'butter')\
+        THEN '" + name + "' ELSE '\%' END) AND from_unit = '" + unit.split('s')[0] + "'"))
+    for convert_result in convert_cursor:
+        conversions_list.append(convert_result)
+    context['conversions'][name] = conversions_list
+    convert_cursor.close()
+
   cursor.close()
   
   # get reviews data

@@ -20,12 +20,16 @@ document.getElementById("target").addEventListener('change', function () {
 
 <div>
   <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
-    <select id="target">
-        <option value="">Conversions...</option>
-        <option value="content_1">Option 1</option>
-        <option value="content_2">Option 2</option>
-        <option value="content_3">Option 3</option>
-    <select>
+  {% if conversions %}
+      <div>
+          <select id="target">
+            <option value="">Conversions...</option>
+            {% for convert in conversions %}
+              <option value="{{convert.to_unit}}">{{convert.res}} {{convert.to_unit}}</option>
+            {% endfor %}
+        </select>
+      </div>
+  {% endif %}
 
     <div id="content_1" class="inv">Content 1</div>
     <div id="content_2" class="inv">Content 2</div>
