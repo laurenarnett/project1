@@ -22,7 +22,7 @@
   <div>
     <h2>Ingredients</h2>
     {% for ingredient in ingredients_data %}
-    <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
+      {% include 'ingredient_card.html' %}
     {% endfor %}
   </div>
   <div>
