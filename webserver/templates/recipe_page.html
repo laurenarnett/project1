@@ -14,7 +14,16 @@
     
     
 <div>
-  <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}}</p>
+  <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}} </p>      
+  {% if username and subs %}
+  <p>Subscribed!</p>
+  {% endif %}
+  {% if username and not subs %}
+    {% with loc = 'recipe_page/' + recipe_data.recipe_name.replace(" ", "_") %}
+      {% set author_username=recipe_data.publisher_username %}
+      {% include 'subscription_card.html' %}
+    {% endwith %}
+  {% endif %}
   <p>{{recipe_data.cuisine_type}}, {{recipe_data.meal_type}}</p>
   {% if recipe_data.dietary_restriction %}
   <p>{{recipe_data.dietary_restriction}}</p>

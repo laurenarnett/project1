@@ -206,12 +206,41 @@ def recipe_page(name):
       reviews.append(result)
   cursor.close()
 
+  if session.get("logged_in_as"):
+    # get username
+    username = session.get("logged_in_as")
+    context['username'] = username
+    cursor = g.conn.execute("SELECT subscribee_username FROM subscriptions subs\
+            WHERE subscriber_username = '{}' and subscribee_username\
+            = '{}'".format(username, recipe_data.publisher_username))
+    result = cursor.fetchone()
+    cursor.close()
+    context['subs'] = result 
+
   context['recipe_data'] = recipe_data
   context['ingredients_data'] = ingredients_data
   context['reviews'] = reviews
 
   return render_template('recipe_page.html', **context)
 
+@app.route('/subscribe', methods=['POST'])
+def addsubscription():
+  if session.get("logged_in_as"):
+    # get username
+    username = session.get("logged_in_as")
+    subscribee_username = request.form.get('author_username')
+    sub_type = request.form.get('subscription_type')
+
+    # add to subscriptions table
+    g.conn.execute(
+      "INSERT INTO subscriptions(subscriber_username, subscribee_username, subscription_type)\
+       values ('{}','{}','{}');".format(username, subscribee_username, sub_type)
+    )
+    return redirect("/{}".format(request.form.get('loc')))
+  else:
+    return redirect("/signup")
+
+  
 @app.route('/addreview', methods=['POST'])
 def addreview():
   review = request.form['review']

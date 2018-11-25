@@ -1,0 +1,14 @@
+<div>
+  <form method="POST" action="/subscribe">
+    <select name="subscription_type">
+        <option value="all">All posts</option>
+        <option value="on publish review">When user publishes review</option>
+        <option value="on publish recipe">When user publishes recipe</option>
+    </select>
+    <div class="button">
+      <input type="hidden" name="author_username" value={{author_username}}>
+      <input type="hidden" name="loc" value={{loc}}>
+      <input type="submit" value="Subscribe">
+    </div>
+  </form>
+</div>
