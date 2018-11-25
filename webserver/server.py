@@ -55,19 +55,32 @@ def index():
   See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
   """
   context = dict()
-
-  if session.get("logged_in_as"):
-    # get username
-    context['logged_in_as'] = session.get("logged_in_as")
-    # TODO: get subscription feed
-    # TODO: get rest of all recipes
-  # else:
-  cursor = g.conn.execute("SELECT * from recipes")
+  cursor = g.conn.execute("SELECT * FROM recipes ORDER BY date_published DESC")
   recipes = []
   for result in cursor:
     recipes.append(result)
   cursor.close()
   context['recipes'] = recipes
+
+  if session.get("logged_in_as"):
+    # get username
+    username = session.get("logged_in_as")
+    context['logged_in_as'] = username
+    # get subscription feed
+    cursor = g.conn.execute(
+      "SELECT r.* FROM recipes r, subscriptions s \
+      WHERE s.subscriber_username='{}' \
+      AND s.subscribee_username=r.publisher_username \
+      AND (s.subscription_type='all' or s.subscription_type='on publish recipe') \
+      ORDER BY date_published DESC;".format(username)
+    )
+    subscription_feed = []
+    for result in cursor:
+      subscription_feed.append(result)
+    cursor.close()
+    context['subscription_feed'] = subscription_feed
+    # remove duplicates in recipes
+    context['recipes'] = [recipe for recipe in context['recipes'] if recipe not in subscription_feed]
 
   return render_template("index.html", **context)
 
