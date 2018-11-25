@@ -75,9 +75,17 @@ def index():
       ORDER BY date_published DESC;".format(username)
     )
     subscription_feed = []
+    # filter out dietary restriction
+    cursor2 = g.conn.execute("SELECT dietary_restriction FROM users WHERE username='{}'".format(username))
+    dietary_restriction = cursor2.fetchone()['dietary_restriction']
+    cursor2.close()
     for result in cursor:
+      if (dietary_restriction == 'vegan' and result['dietary_restriction'] != 'vegan') \
+        or (dietary_restriction == 'vegetarian' and result['dietary_restriction'] == 'none'):
+        continue
       subscription_feed.append(result)
     cursor.close()
+
     context['subscription_feed'] = subscription_feed
     # remove duplicates in recipes
     context['recipes'] = [recipe for recipe in context['recipes'] if recipe not in subscription_feed]
