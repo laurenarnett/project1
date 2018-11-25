@@ -12,26 +12,29 @@
 <body>
     <h1>{{recipe_data.recipe_name}}</h1>
     
-    
 <div>
   <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}} </p>      
+
   {% if username and subs %}
-  <p>Subscribed!</p>
+    <p>Subscribed!</p>
   {% endif %}
+
   {% if username and not subs %}
     {% with loc = 'recipe_page/' + recipe_data.recipe_name.replace(" ", "_") %}
       {% set author_username=recipe_data.publisher_username %}
       {% include 'subscription_card.html' %}
     {% endwith %}
   {% endif %}
+
   <p>{{recipe_data.cuisine_type}}, {{recipe_data.meal_type}}</p>
-  {% if recipe_data.dietary_restriction %}
-  <p>{{recipe_data.dietary_restriction}}</p>
+
+  {% if recipe_data.dietary_restriction != 'none' %}
+    <p>{{recipe_data.dietary_restriction}}</p>
   {% endif %}
   <div>
     <h2>Ingredients</h2>
     {% for ingredient in ingredients_data %}
-    <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
+      <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
     {% endfor %}
   </div>
   <div>
@@ -41,7 +44,7 @@
       <p>Review: <input type="text" name="review">
 
       <!-- TODO: change value to login username -->
-      <input type="hidden" name="author_username" value="lba2138">
+      <input type="hidden" name="author_username" value={{username}}>
       <input type="hidden" name="recipe_name" value="{{recipe_data.recipe_name}}">
 
       <input type="submit" value="Add"></p>

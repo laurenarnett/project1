@@ -172,6 +172,17 @@ def profile(name):
       bookmarks.append(result)
   cursor.close()
 
+  if session.get("logged_in_as"):
+    # get username
+    username = session.get("logged_in_as")
+    context['username'] = username
+    cursor = g.conn.execute("SELECT subscribee_username FROM subscriptions subs\
+            WHERE subscriber_username = '{}' and subscribee_username\
+            = '{}'".format(username, user_info.username))
+    result = cursor.fetchone()
+    cursor.close()
+    context['subs'] = result 
+
   context['user_info'] = user_info
   context['recipes'] = recipes
   context['bookmarks'] = bookmarks
@@ -200,7 +211,9 @@ def recipe_page(name):
   # get reviews data
   cursor = g.conn.execute("SELECT rev.* FROM reviews rev \
             INNER JOIN recipes r on\
-            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")
+            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '"
+            + name.replace("_", " ") + 
+            "' ORDER BY date_published DESC")
   reviews = []
   for result in cursor:
       reviews.append(result)
