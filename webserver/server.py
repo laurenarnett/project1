@@ -1,9 +1,10 @@
 #!/usr/bin/env python2.7
 import os
 import datetime
+import re
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, session
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -54,15 +55,98 @@ def index():
   See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
   """
   context = dict()
-
-  cursor = g.conn.execute("SELECT * from recipes")
+  cursor = g.conn.execute("SELECT * FROM recipes ORDER BY date_published DESC")
   recipes = []
   for result in cursor:
     recipes.append(result)
   cursor.close()
   context['recipes'] = recipes
 
+  if session.get("logged_in_as"):
+    # get username
+    username = session.get("logged_in_as")
+    context['logged_in_as'] = username
+    # get subscription feed
+    cursor = g.conn.execute(
+      "SELECT r.* FROM recipes r, subscriptions s \
+      WHERE s.subscriber_username='{}' \
+      AND s.subscribee_username=r.publisher_username \
+      AND (s.subscription_type='all' or s.subscription_type='on publish recipe') \
+      ORDER BY date_published DESC;".format(username)
+    )
+    subscription_feed = []
+    # filter out dietary restriction
+    cursor2 = g.conn.execute("SELECT dietary_restriction FROM users WHERE username='{}'".format(username))
+    dietary_restriction = cursor2.fetchone()['dietary_restriction']
+    cursor2.close()
+    for result in cursor:
+      if (dietary_restriction == 'vegan' and result['dietary_restriction'] != 'vegan') \
+        or (dietary_restriction == 'vegetarian' and result['dietary_restriction'] == 'none'):
+        continue
+      subscription_feed.append(result)
+    cursor.close()
+
+    context['subscription_feed'] = subscription_feed
+    # remove duplicates in recipes
+    context['recipes'] = [recipe for recipe in context['recipes'] if recipe not in subscription_feed]
+
   return render_template("index.html", **context)
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+  if request.method == 'POST':
+    name = request.form['name']
+    username = request.form['username']
+    password = request.form['password']
+    email = request.form['email']
+    dietary_restriction = request.form['dietary_restriction']
+    zipcode = request.form['zipcode']
+    # check if username exists
+    cursor = g.conn.execute("SELECT username FROM users WHERE username='{}';".format(username))
+    if cursor.rowcount != 0:
+      return render_template("signup.html", error="Signup fail. Username already exists.")
+    cursor.close()
+    # check if dietary_restriction is valid
+    if dietary_restriction not in set(['none', 'vegan', 'vegetarian']):
+      return render_template("signup.html", error="Signup fail. Invalid dietary restriction.")
+    # check if email is valid
+    if not re.match(r"[a-zA-Z0-9._\-+]+@[A-Za-z0-9-]+\.[a-z]+", email):
+      return render_template("signup.html", error="Signup fail. Invalid email.")
+    # check if zipcode is valid
+    if not zipcode.isdigit() or len(zipcode) > 5:
+      return render_template("signup.html", error="Signup fail. Invalid zipcode.")
+
+    # sign up and login
+    g.conn.execute(
+      "INSERT INTO users(name, username, email, password, dietary_restriction, zip_code)\
+       values ('{}','{}','{}','{}','{}','{}');".format(\
+        name, username, email, password, dietary_restriction, zipcode)
+    )
+    session['logged_in_as'] = username
+    return redirect("/")
+  else:
+    return render_template("signup.html")
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+  if request.method == 'POST':
+    username = request.form['username']
+    password = request.form['password']
+    cursor = g.conn.execute("SELECT username, password FROM users WHERE username='{}' and password='{}';".format(username, password))
+    if cursor.rowcount == 0:
+      return render_template("login.html", error="Login fail. Please try again.")
+    cursor.close()
+
+    # log in
+    session['logged_in_as'] = username
+    return redirect("/")
+  else:
+    return render_template("login.html")
+
+@app.route('/logout')
+def logout():
+  del session['logged_in_as']
+  return redirect("/")
 
 
 @app.route('/profile/<name>')
@@ -73,7 +157,7 @@ def profile(name):
   cursor = g.conn.execute("SELECT name,username FROM users WHERE username='" + name + "'")
   user_info = cursor.fetchone()
   cursor.close()
-  
+
   # get recipes this user has published
   cursor = g.conn.execute("SELECT * FROM recipes WHERE publisher_username='" + name + "'")
   recipes = []
@@ -107,16 +191,16 @@ def recipe_page(name):
   # get ingredients data
   cursor = g.conn.execute("SELECT l.*\
             from ingredients_list l inner join recipes r on\
-            r.recipe_name=l.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
+            r.recipe_name=l.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")
   ingredients_data = []
   for result in cursor:
     ingredients_data.append(result)
   cursor.close()
-  
+
   # get reviews data
   cursor = g.conn.execute("SELECT rev.* FROM reviews rev \
             INNER JOIN recipes r on\
-            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
+            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")
   reviews = []
   for result in cursor:
       reviews.append(result)
@@ -154,6 +238,7 @@ if __name__ == "__main__":
   def run(debug, threaded, host, port):
     HOST, PORT = host, port
     print "running on %s:%d" % (HOST, PORT)
+    app.secret_key = os.urandom(12)
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
   run()
