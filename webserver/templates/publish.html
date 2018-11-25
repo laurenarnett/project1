@@ -1,0 +1,58 @@
+<html>
+    <head>
+      <style>
+        body{
+          font-size: 15pt;
+          font-family: arial;
+        }
+        .block{
+          margin-bottom: 10px;
+        }
+      </style>
+
+    </head>
+
+<body>
+  <h1>Saffron</h1>
+  <div>
+    <form method="POST">
+      <div class="block">
+        <label for="recipe_name">Recipe Name</label>
+        <input type="text" name="recipe_name" id="recipe_name">
+      </div>
+      <!-- cuisine type -->
+      <!-- meal type -->
+      <div class="block">
+        <label for="dietary_restriction">Dietary Restriction</label>
+        <select name="dietary_restriction" id="dietary_restriction">
+          <option value="none">None</option>
+          <option value="vegetarian">Vegetarian</option>
+          <option value="vegan">Vegan</option>
+        </select>
+      </div>
+      <!-- ingredients -->
+      <input type="submit" value="Publish">
+    </form>
+    <hr />
+    <p>Need to include an ingredient that doesn't exist? Add one here. </p>
+    <form method="POST" action="/addingredient">
+      <div class="block">
+        <label for="ingredient_name">Ingredient Name</label>
+        <input type="text" name="ingredient_name" id="ingredient_name">
+      </div>
+      <div class="block">
+        <label for="food_type">Food Type</label>
+        <select name="food_type" id="food_type">
+          <option value="meat">Meat</option>
+          <option value="dairy">Dairy</option>
+          <option value="vegetable">Vegetable</option>
+          <option value="fruit">Fruit</option>
+          <option value="grain">Grain</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <input type="submit" value="Publish">
+    </form>
+  </div>
+</body>
+</html>

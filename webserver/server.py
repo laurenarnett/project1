@@ -226,6 +226,37 @@ def addreview():
   g.conn.execute(text(cmd))
   return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
 
+@app.route("/publish", methods=['GET', 'POST'])
+def publish():
+  if request.method == 'POST':
+    # redirect to recipe page
+    return redirect('/')
+  else:
+    return render_template('publish.html')
+
+@app.route("/ingredients", methods=['GET', 'POST'])
+def ingredients():
+  if request.method == 'POST':
+    # redirect to ingredients page
+    name = request.form['ingredient_name']
+    food_type = request.form['food_type']
+    # check that name isn't already taken
+    cursor = g.conn.execute("SELECT * FROM ingredients WHERE name='{}'".format(name))
+    if cursor.rowcount != 0:
+      return redirect('/ingredients')
+
+    # insert
+    g.conn.execute("INSERT INTO ingredients(name, food_type) VALUES ('{}', '{}')".format(name, food_type))
+    return redirect('/ingredients')
+  else:
+    cursor = g.conn.execute("SELECT * FROM ingredients order by name;")
+    ingredients = []
+    for result in cursor:
+      if result['name'] == '%':
+        continue
+      ingredients.append(result)
+    cursor.close()
+    return render_template('ingredients.html', ingredients=ingredients)
 
 if __name__ == "__main__":
   import click
