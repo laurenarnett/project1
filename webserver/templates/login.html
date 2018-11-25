@@ -1,0 +1,41 @@
+<html>
+    <head>
+      <style>
+        body{
+          font-size: 15pt;
+          font-family: arial;
+        }
+        #loginfail{
+          color: red;
+        }
+        label{
+          display: inline-block;
+        }
+        .block{
+          margin-bottom: 10px;
+        }
+      </style>
+
+    </head>
+
+<body>
+  <h1>Saffron</h1>
+  <div>
+    <form method="POST">
+      <div class="block">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username">
+      </div>
+      <div class="block">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password">
+      </div>
+      <input type="submit" value="Login">
+      {% if error %}
+      <p id="loginfail">{{error}}</p>
+      {% endif %}
+      <p>Don't have an account? <a href="/signup">Sign up here.</a></p>
+    </form>
+  </div>
+</body>
+</html>

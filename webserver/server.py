@@ -3,7 +3,7 @@ import os
 import datetime
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, session
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -55,6 +55,12 @@ def index():
   """
   context = dict()
 
+  if session.get("logged_in_as"):
+    # get username
+    context['logged_in_as'] = session.get("logged_in_as")
+    # TODO: get subscription feed
+    # TODO: get rest of all recipes
+  # else:
   cursor = g.conn.execute("SELECT * from recipes")
   recipes = []
   for result in cursor:
@@ -63,6 +69,37 @@ def index():
   context['recipes'] = recipes
 
   return render_template("index.html", **context)
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+  if request.method == 'POST':
+    # attempt signup
+    # TODO: check if username exists
+    # TODO: check if email is valid
+    # TODO: check if zipcode is valid
+    return redirect("/")
+  else:
+    return render_template("signup.html")
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+  if request.method == 'POST':
+    # attempt login
+    username = request.form['username']
+    password = request.form['password']
+    cursor = g.conn.execute("SELECT username, password FROM users WHERE username='{}' and password='{}';".format(username, password))
+    if cursor.rowcount == 0:
+      return render_template("login.html", error="Login fail. Please try again.")
+
+    session['logged_in_as'] = username
+    return redirect("/")
+  else:
+    return render_template("login.html")
+
+@app.route('/logout')
+def logout():
+  del session['logged_in_as']
+  return redirect("/")
 
 
 @app.route('/profile/<name>')
@@ -73,7 +110,7 @@ def profile(name):
   cursor = g.conn.execute("SELECT name,username FROM users WHERE username='" + name + "'")
   user_info = cursor.fetchone()
   cursor.close()
-  
+
   # get recipes this user has published
   cursor = g.conn.execute("SELECT * FROM recipes WHERE publisher_username='" + name + "'")
   recipes = []
@@ -107,16 +144,16 @@ def recipe_page(name):
   # get ingredients data
   cursor = g.conn.execute("SELECT l.*\
             from ingredients_list l inner join recipes r on\
-            r.recipe_name=l.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
+            r.recipe_name=l.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")
   ingredients_data = []
   for result in cursor:
     ingredients_data.append(result)
   cursor.close()
-  
+
   # get reviews data
   cursor = g.conn.execute("SELECT rev.* FROM reviews rev \
             INNER JOIN recipes r on\
-            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")  
+            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")
   reviews = []
   for result in cursor:
       reviews.append(result)
@@ -154,6 +191,7 @@ if __name__ == "__main__":
   def run(debug, threaded, host, port):
     HOST, PORT = host, port
     print "running on %s:%d" % (HOST, PORT)
+    app.secret_key = os.urandom(12)
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
   run()

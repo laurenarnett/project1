@@ -1,0 +1,57 @@
+<html>
+    <head>
+      <style>
+        body{
+          font-size: 15pt;
+          font-family: arial;
+        }
+        #signupfail{
+          color: red;
+        }
+        label{
+          display: inline-block;
+        }
+        .block{
+          margin-bottom: 10px;
+        }
+      </style>
+
+    </head>
+
+<body>
+  <h1>Saffron</h1>
+  <div>
+    <form method="POST">
+      <div class="block">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username">
+      </div>
+      <div class="block">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password">
+      </div>
+      <div class="block">
+        <label for="email">Email</label>
+        <input type="text" name="email" id="email">
+      </div>
+      <div class="block">
+      <label for="dietary_restriction">Dietary Restriction</label>
+        <select name="dietary_restriction" id="dietary_restriction">
+          <option value="none">None</option>
+          <option value="vegetarian">Vegetarian</option>
+          <option value="vegan">Vegan</option>
+        </select>
+      </div>
+      <div class="block">
+        <label for="zipcode">Zipcode</label>
+        <input type="text" name="zipcode" id="zipcode">
+      </div>
+      <input type="submit" value="Sign up">
+      {% if error %}
+      <p id="signupfail">{{error}}</p>
+      {% endif %}
+      <p>Already have an account? <a href="/login">Login here.</a></p>
+    </form>
+  </div>
+</body>
+</html>

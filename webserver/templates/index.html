@@ -11,12 +11,18 @@
 
 <body>
   <h1>Saffron</h1>
-
+  {% if logged_in_as %}
+    <h4>Hello, {{logged_in_as}}. <a href="#">Account Settings</a> <a href="/logout">Logout</a></h4>
+  {% else %}
+    <h4><a href="/signup">Sign Up</a> | <a href="/login">Login</a></h4>
+  {% endif %}
   <div>
     <form method="GET" action="#">
        <input type="text" name="query"> <input type="submit" value="Search">
     </form>
   </div>
+
+  <hr />
 
   {% if subscription_feed %}
   <div>
