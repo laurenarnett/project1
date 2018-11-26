@@ -501,28 +501,33 @@ def update():
     logged_in_as = session.get('logged_in_as')
     if request.form.get('full_name'):
         full_name = request.form.get('full_name')
-        g.conn.execute(text("UPDATE users SET name = '{}' WHERE\
-                username='{}'".format(full_name, logged_in_as)))
+        query = text("UPDATE users SET name = (:full_name) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, full_name=full_name, logged_in_as=logged_in_as)
         return redirect("/{}".format(request.form.get('loc')))
     if request.form.get('password'):
         password = request.form.get('password')
-        g.conn.execute(text("UPDATE users SET password = '{}' WHERE\
-                username='{}'".format(password, logged_in_as)))
+        query = text("UPDATE users SET password = (:password) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, password=password, logged_in_as=logged_in_as)
         return redirect("/{}".format(request.form.get('loc')))
     if request.form.get('email'):
         email= request.form.get('email')
-        g.conn.execute(text("UPDATE users SET email = '{}' WHERE\
-                username='{}'".format(email, logged_in_as)))
+        query = text("UPDATE users SET email = (:email) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, email=email, logged_in_as=logged_in_as)
         return redirect("/{}".format(request.form.get('loc')))
     if request.form.get('zipcode'):
         zipcode = request.form.get('zipcode')
-        g.conn.execute(text("UPDATE users SET zip_code = {} WHERE\
-                username='{}'".format(zipcode, logged_in_as)))
+        query = text("UPDATE users SET zip_code = (:zipcode) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, zipcode=zipcode, logged_in_as=logged_in_as)
         return redirect("/{}".format(request.form.get('loc')))
     if request.form.get('diet'):
         diet = request.form.get('diet')
-        g.conn.execute(text("UPDATE users SET dietary_restriction = '{}' WHERE\
-                username='{}'".format(diet, logged_in_as)))
+        query = text("UPDATE users SET diet = (:diet) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, diet=diet, logged_in_as=logged_in_as)
         return redirect("/{}".format(request.form.get('loc')))
 
 if __name__ == "__main__":
