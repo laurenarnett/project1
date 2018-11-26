@@ -23,18 +23,6 @@
   </div>
 
   <hr />
-
-  {% if subscription_feed %}
-  <div>
-    <h2>Your subscription feed</h2>
-    <div>
-      {% for recipe in subscription_feed %}
-        {% include 'recipe_card.html' %}
-      {% endfor %}
-    </div>
-    <hr />
-  </div>
-  {% endif %}
   <div>
     {% for recipe in recipes %}
       {% include 'recipe_card.html' %}
