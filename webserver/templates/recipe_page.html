@@ -14,7 +14,7 @@
     
     
 <div>
-  <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}}</p>
+  <p>Published by <a href={{'/profile/' + recipe_data.publisher_username}}>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}}</p>
   <p>{{recipe_data.cuisine_type}}, {{recipe_data.meal_type}}</p>
   {% if recipe_data.dietary_restriction %}
   <p>{{recipe_data.dietary_restriction}}</p>
@@ -22,7 +22,9 @@
   <div>
     <h2>Ingredients</h2>
     {% for ingredient in ingredients_data %}
-    <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
+      {% with conversions = conversions[ingredient.ingredient_name] %} 
+        {% include 'ingredient_card.html' %}
+      {% endwith %}
     {% endfor %}
   </div>
   <div>
