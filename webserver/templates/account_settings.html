@@ -60,6 +60,55 @@
             </div>
          </form>
        {% endfor %}
-   </div>
+       <h2>Account Settings</h2>
+         <div>
+          {% with loc='account_settings/' + logged_in_as %}
+           <form method="POST" action='/update'>
+             <div class="block">
+               <label for="full_name">Full Name</label>
+               <input type="hidden" name="loc" value={{loc}}>
+               <input type="text" name="full_name" id="full_name">
+               <input type="submit" value="Update Full Name">
+             </div>
+           </form>
+           <form method="POST" action='/update'>
+             <div class="block">
+               <label for="email">Email Address</label>
+               <input type="hidden" name="loc" value={{loc}}>
+               <input type="text" name="email" id="email">
+               <input type="submit" value="Update Email">
+             </div>
+           </form>
+           <form method="POST" action='/update'>
+             <div class="block">
+               <label for="password">Password</label>
+               <input type="password" name="password" id="password">
+               <input type="hidden" name="loc" value={{loc}}>
+               <input type="submit" value="Update Password">
+             </div>
+           </form>
+           <form method="POST" action='/update'>
+             <div class="block">
+               <label for="zipcode">Zipcode</label>
+               <input type="number" name="zipcode" id="zipcode" min="00000" max="99999" step="1">
+               <input type="hidden" name="loc" value={{loc}}>
+               <input type="submit" value="Update zipcode">
+             </div>
+           </form>
+           <p>Update Dietary Restrictions</p>
+           <div>
+            <form method="POST" action='/update'>
+             <select id="diet" name="diet">
+               <option value="">Change...</option>
+               <option value="none">None</option>
+               <option value="vegetarian">Vegetarian</option>
+               <option value="vegan">Vegan</option>
+             </select>
+             <input type="hidden" name="loc" value={{loc}}>
+             <input type="submit" value="Update Restrictions">
+            </form>
+           </div>
+          {% endwith %}
+         </div>
  </body>
 </html>
