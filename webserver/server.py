@@ -67,16 +67,16 @@ def index():
     username = session.get("logged_in_as")
     context['logged_in_as'] = username
     # get subscription feed
-    cursor = g.conn.execute(
-      "SELECT r.* FROM recipes r, subscriptions s \
-      WHERE s.subscriber_username='{}' \
-      AND s.subscribee_username=r.publisher_username \
-      AND (s.subscription_type='all' or s.subscription_type='on publish recipe') \
-      ORDER BY date_published DESC;".format(username)
-    )
+    query = text("SELECT r.* FROM recipes r, subscriptions s \
+            WHERE s.subscriber_username=:username \
+            AND s.subscribee_username=r.publisher_username \
+            AND (s.subscription_type='all' or s.subscription_type='on publish recipe') \
+            ORDER BY date_published DESC;")
+    cursor = g.conn.execute(query, username=username)
     subscription_feed = []
     # filter out dietary restriction
-    cursor2 = g.conn.execute("SELECT dietary_restriction FROM users WHERE username='{}'".format(username))
+    query2 = text("SELECT dietary_restriction FROM users WHERE username=:username;")
+    cursor2 = g.conn.execute(query2, username=username)
     dietary_restriction = cursor2.fetchone()['dietary_restriction']
     cursor2.close()
     for result in cursor:
@@ -102,7 +102,8 @@ def signup():
     dietary_restriction = request.form['dietary_restriction']
     zipcode = request.form['zipcode']
     # check if username exists
-    cursor = g.conn.execute("SELECT username FROM users WHERE username='{}';".format(username))
+    query = text("SELECT username FROM users WHERE username=:username;")
+    cursor = g.conn.execute(query, username=username)
     if cursor.rowcount != 0:
       return render_template("signup.html", error="Signup fail. Username already exists.")
     cursor.close()
@@ -117,11 +118,13 @@ def signup():
       return render_template("signup.html", error="Signup fail. Invalid zipcode.")
 
     # sign up and login
-    g.conn.execute(
-      "INSERT INTO users(name, username, email, password, dietary_restriction, zip_code)\
-       values ('{}','{}','{}','{}','{}','{}');".format(\
-        name, username, email, password, dietary_restriction, zipcode)
+    query = text("INSERT INTO users(name, username, email, password, dietary_restriction, zip_code)\
+       values (:name, :username, :email, :password, :dietary_restriction, :zipcode);")
+    g.conn.execute(query,
+        name=name, username=username, email=email, password=password,
+        dietary_restriction=dietary_restriction, zipcode=zipcode
     )
+
     session['logged_in_as'] = username
     return redirect("/")
   else:
@@ -132,7 +135,8 @@ def login():
   if request.method == 'POST':
     username = request.form['username']
     password = request.form['password']
-    cursor = g.conn.execute("SELECT username, password FROM users WHERE username='{}' and password='{}';".format(username, password))
+    query = text("SELECT username, password FROM users WHERE username=:username and password=:password;")
+    cursor = g.conn.execute(query, username=username, password=password)
     if cursor.rowcount == 0:
       return render_template("login.html", error="Login fail. Please try again.")
     cursor.close()
@@ -181,7 +185,7 @@ def profile(name):
             = '{}'".format(username, user_info.username))
     result = cursor.fetchone()
     cursor.close()
-    context['subs'] = result 
+    context['subs'] = result
 
   context['user_info'] = user_info
   context['recipes'] = recipes
@@ -271,7 +275,7 @@ def recipe_page(name):
   cursor = g.conn.execute("SELECT rev.* FROM reviews rev \
             INNER JOIN recipes r on\
             r.recipe_name=rev.recipe_name WHERE r.recipe_name = '"
-            + name.replace("_", " ") + 
+            + name.replace("_", " ") +
             "' ORDER BY date_published DESC")
   reviews = []
   for result in cursor:
@@ -289,8 +293,8 @@ def recipe_page(name):
             = '{}'".format(username, recipe_data.publisher_username))
     result = cursor.fetchone()
     cursor.close()
-    context['subs'] = result 
-    
+    context['subs'] = result
+
     # get bookmarks
     cursor = g.conn.execute("SELECT recipe_name FROM bookmarks\
             WHERE username='{}' and recipe_name\
@@ -342,7 +346,7 @@ def addbookmark():
     recipe_name = request.form.get('recipe_name')
     bookmark_activity = request.form.get('bookmark_activity')
     if bookmark_activity == "Add":
-   
+
       # add to subscriptions table
       g.conn.execute(
         "INSERT INTO bookmarks(username, recipe_name)\
@@ -417,7 +421,8 @@ def publish():
       context['error'] = "Please populate the ingredient name, units, and quantities for each ingredient."
       return render_template('publish.html', **context)
     # verify recipe name doesn't already exist
-    cursor = g.conn.execute("SELECT * FROM recipes WHERE recipe_name='{}';".format(recipe_name))
+    query = text("SELECT * FROM recipes WHERE recipe_name=:recipe_name;")
+    cursor = g.conn.execute(query, recipe_name=recipe_name)
     if cursor.rowcount != 0:
       context['error'] = "Recipe name already exists. Please choose another."
       return render_template('publish.html', **context)
@@ -437,10 +442,14 @@ def publish():
       return render_template('publish.html', **context)
     # insert recipe
     date_published = datetime.datetime.today().strftime('%Y-%m-%d')
-    g.conn.execute(
-      "INSERT INTO recipes(recipe_name, cuisine_type, meal_type, dietary_restriction, date_published, publisher_username) \
-      VALUES ('{}', '{}', '{}', '{}', '{}', '{}');".format(recipe_name, cuisine_type, meal_type, dietary_restriction, date_published, session.get('logged_in_as'))
+    query = "INSERT INTO recipes(recipe_name, cuisine_type, meal_type, dietary_restriction, date_published, publisher_username) \
+            VALUES (:recipe_name, :cuisine_type, :meal_type, :dietary_restriction, :date_published, :publisher_username);"
+    g.conn.execute(query,
+      recipe_name=recipe_name, cuisine_type=cuisine_type, meal_type=meal_type,
+      dietary_restriction=dietary_restriction, date_published=date_published,
+      publisher_username=session.get('logged_in_as')
     )
+
     # insert ingredients_list
     values = []
     for ing, unit, quantity in zip(ingredients, units, quantities):
@@ -463,12 +472,14 @@ def ingredients():
     name = request.form['ingredient_name']
     food_type = request.form['food_type']
     # check that name isn't already taken
-    cursor = g.conn.execute("SELECT * FROM ingredients WHERE name='{}'".format(name))
+    query = text("SELECT * FROM ingredients WHERE name=:name;")
+    cursor = g.conn.execute(query, name=name)
     if cursor.rowcount != 0:
       return redirect('/ingredients')
 
     # insert
-    g.conn.execute("INSERT INTO ingredients(name, food_type) VALUES ('{}', '{}')".format(name, food_type))
+    query = "INSERT INTO ingredients(name, food_type) VALUES (:name, :food_type);"
+    g.conn.execute(query, name=name, food_type=food_type)
     return redirect('/ingredients')
   else:
     cursor = g.conn.execute("SELECT * FROM ingredients order by name;")
