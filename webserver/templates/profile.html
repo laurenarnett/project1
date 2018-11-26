@@ -10,12 +10,24 @@
 
  <header>
     <h1><a href='/'>Saffron</a></h1>
-    <p style="text-align:left;"><a href='#'>Publish new recipe</a>
-    <span style="float:right;"><a href='#'>Account Settings</a></span> </p>
+    {% if username %}
+      <p style="text-align:left;"><a href='#'>Publish new recipe</a>
+      <span style="float:right;"><a href='#'>Account Settings</a></span> </p>
+    {% endif %}
  </header>
  <body>
     <h1>{{user_info.name}}</h1>
     <h2>{{user_info.username}}</h2>
+      {% if username and subs %}
+        <p>Subscribed!</p>
+      {% endif %}
+
+      {% if username and not subs %}
+        {% with loc = 'profile/' + user_info.username %}
+          {% set author_username=user_info.username %}
+          {% include 'subscription_card.html' %}
+        {% endwith %}
+      {% endif %}
     <div>
         <h2>Published Recipes</h2>
         {% for recipe in recipes %}
