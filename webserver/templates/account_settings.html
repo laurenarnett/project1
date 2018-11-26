@@ -1,0 +1,29 @@
+<html>
+    <head>
+      <style>
+        body{
+          font-size: 12pt;
+          font-family: arial;
+        }
+      </style>
+     </head>
+ <header>
+    <h1><a href='/'>Saffron</a></h1>
+      <p style="text-align:left;"><a href='#'>Publish new recipe</a></p>
+ </header>
+ <body>
+     <h3>Subscriptions</h3>
+     {% for sub in subs %}
+       <p><a href={{'/profile/' + sub.subscribee_username}}>{{sub.subscribee_username}}</a></p>
+       <form method="POST" action="/remove_sub">
+         <div class="button">
+           {% with loc='account_settings/' + logged_in_as %}
+             <input type="hidden" name="username" value={{logged_in_as}}>
+             <input type="hidden" name="subscribee_username" value={{sub.subscribee_username}}>
+             <input type="hidden" name="loc" value={{loc}}>
+             <input type="submit" value="Unsubscribe">
+           {% endwith %}
+         </div>
+       </form>
+     {% endfor %}
+ </body>

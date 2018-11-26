@@ -189,6 +189,29 @@ def profile(name):
 
   return render_template("profile.html", **context)
 
+@app.route('/account_settings/<name>')
+def account_settings(name):
+  # verify username is same as login information
+  if session.get("logged_in_as"):
+    username = session.get("logged_in_as")
+    if username != name:
+      return redirect("/")
+  context = dict()
+
+  if session.get("logged_in_as"):
+    # get username
+    username = session.get("logged_in_as")
+    context['logged_in_as'] = username
+  subs = []
+  cursor = g.conn.execute(("SELECT * FROM subscriptions WHERE\
+    subscriber_username = '{}'").format(name))
+  for result in cursor:
+    subs.append(result)
+  cursor.close()
+
+  context['subs'] = subs
+  return render_template('account_settings.html', **context)
+
 
 @app.route('/recipe_page/<name>')
 def recipe_page(name):
@@ -294,6 +317,20 @@ def addreview():
   g.conn.execute(text(cmd))
   return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
 
+@app.route('/remove_sub', methods=['POST'])
+def removesub():
+  if session.get("logged_in_as"):
+    # get username
+    subscriber_username = session.get("logged_in_as")
+    subscribee_username = request.form.get('subscribee_username')
+
+    # remove from subscriptions table
+    g.conn.execute(
+      "DELETE FROM subscriptions \
+      WHERE subscriber_username = '{}' AND subscribee_username = '{}';"\
+      .format(subscriber_username, subscribee_username)
+    )
+    return redirect("/{}".format(request.form.get('loc')))
 
 if __name__ == "__main__":
   import click
