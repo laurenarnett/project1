@@ -181,7 +181,7 @@ def profile(name):
             = '{}'".format(username, user_info.username))
     result = cursor.fetchone()
     cursor.close()
-    context['subs'] = result 
+    context['subs'] = result
 
   context['user_info'] = user_info
   context['recipes'] = recipes
@@ -271,7 +271,7 @@ def recipe_page(name):
   cursor = g.conn.execute("SELECT rev.* FROM reviews rev \
             INNER JOIN recipes r on\
             r.recipe_name=rev.recipe_name WHERE r.recipe_name = '"
-            + name.replace("_", " ") + 
+            + name.replace("_", " ") +
             "' ORDER BY date_published DESC")
   reviews = []
   for result in cursor:
@@ -289,8 +289,8 @@ def recipe_page(name):
             = '{}'".format(username, recipe_data.publisher_username))
     result = cursor.fetchone()
     cursor.close()
-    context['subs'] = result 
-    
+    context['subs'] = result
+
     # get bookmarks
     cursor = g.conn.execute("SELECT recipe_name FROM bookmarks\
             WHERE username='{}' and recipe_name\
@@ -342,7 +342,7 @@ def addbookmark():
     recipe_name = request.form.get('recipe_name')
     bookmark_activity = request.form.get('bookmark_activity')
     if bookmark_activity == "Add":
-   
+
       # add to subscriptions table
       g.conn.execute(
         "INSERT INTO bookmarks(username, recipe_name)\
@@ -481,6 +481,18 @@ def ingredients():
     cursor.close()
     return render_template('ingredients.html', ingredients=ingredients, logged_in_as=session.get('logged_in_as'))
 
+@app.route("/search")
+def search():
+  query = request.args['query']
+  cursor = g.conn.execute(text("SELECT * FROM recipes WHERE LOWER(recipe_name) LIKE '%{}%';".format(query.lower())))
+  context = dict()
+  recipes = []
+  for result in cursor:
+    recipes.append(result)
+  cursor.close()
+  context['recipes'] = recipes
+  context['logged_in_as'] = session.get('logged_in_as')
+  return render_template('search.html', **context)
 
 if __name__ == "__main__":
   import click
