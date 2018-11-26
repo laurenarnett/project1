@@ -11,8 +11,8 @@
  <header>
     <h1><a href='/'>Saffron</a></h1>
     {% if username %}
-      <p style="text-align:left;"><a href='#'>Publish new recipe</a>
-      <span style="float:right;"><a href='#'>Account Settings</a></span> </p>
+      <p style="text-align:left;"><a href='/publish'>Publish new recipe</a>
+      <span style="float:right;"><a href={{'/account_settings/' + username}}>Account Settings</a></span> </p>
     {% endif %}
  </header>
  <body>
