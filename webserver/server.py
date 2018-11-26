@@ -400,6 +400,7 @@ def publish():
     return render_template('publish.html', error="Please sign in to publish a recipe.")
 
   context = dict()
+  context['logged_in_as'] = session.get('logged_in_as')
   cursor = g.conn.execute("SELECT * FROM ingredients order by name;")
   all_ingredients = []
   for result in cursor:
@@ -489,8 +490,20 @@ def ingredients():
         continue
       ingredients.append(result)
     cursor.close()
-    return render_template('ingredients.html', ingredients=ingredients)
+    return render_template('ingredients.html', ingredients=ingredients, logged_in_as=session.get('logged_in_as'))
 
+@app.route("/search")
+def search():
+  query = request.args['query']
+  cursor = g.conn.execute(text("SELECT * FROM recipes WHERE LOWER(recipe_name) LIKE '%{}%';".format(query.lower())))
+  context = dict()
+  recipes = []
+  for result in cursor:
+    recipes.append(result)
+  cursor.close()
+  context['recipes'] = recipes
+  context['logged_in_as'] = session.get('logged_in_as')
+  return render_template('search.html', **context)
 
 if __name__ == "__main__":
   import click
