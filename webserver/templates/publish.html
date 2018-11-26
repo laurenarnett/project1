@@ -1,0 +1,97 @@
+<html>
+    <head>
+      <style>
+        body{
+          font-size: 15pt;
+          font-family: arial;
+        }
+        .block{
+          margin-bottom: 10px;
+        }
+        #error{
+          color: red;
+        }
+      </style>
+
+    </head>
+
+<body>
+  <h1>Saffron</h1>
+  <div>
+    <form method="POST">
+      <div class="block">
+        <label for="recipe_name">Recipe Name</label>
+        <input type="text" name="recipe_name" id="recipe_name">
+      </div>
+      <div class="block">
+        <label for="cuisine_type">Cuisine Type</label>
+        <input type="text" name="cuisine_type" id="cuisine_type">
+      </div>
+      <div class="block">
+        <label for="meal_type">Meal Type</label>
+        <select name="meal_type" id="meal_type">
+          <option value="breakfast">Breakfast</option>
+          <option value="lunch">Lunch</option>
+          <option value="dinner">Dinner</option>
+          <option value="dessert">Dessert</option>
+          <option value="snack">Snack</option>
+        </select>
+      </div>
+      <div class="block">
+        <label for="dietary_restriction">Dietary Restriction</label>
+        <select name="dietary_restriction" id="dietary_restriction">
+          <option value="none">None</option>
+          <option value="vegetarian">Vegetarian</option>
+          <option value="vegan">Vegan</option>
+        </select>
+      </div>
+      <p>Ingredients</p>
+      <button onclick="addIngredient()" type="button">Add Ingredient</button>
+      <ul id="ingredients">
+        <li>
+          <input list="ingredients_list" name="ingredients[]" />
+          <input type="text" name="quantities[]" placeholder="quantity" />
+          <input type="text" name="units[]" placeholder="unit" />
+        </li>
+      </ul>
+
+      <datalist id="ingredients_list">
+        {% for ingredient in ingredients %}
+        <option value="{{ingredient.name}}" />
+        {% endfor %}
+      </datalist>
+      <p>Need to include an ingredient that doesn't exist? Add one <a href="/ingredients">here.</a></p>
+      <br />
+      {% if error %}
+      <p id="error">{{error}}</p>
+      {% endif %}
+      <input type="submit" value="Publish">
+    </form>
+  </div>
+</body>
+<script type="text/javascript">
+  function addIngredient() {
+    var ingredients = document.getElementById('ingredients');
+    var li = document.createElement("li");
+
+    var ingredient = document.createElement("input");
+    ingredient.setAttribute('list', 'ingredients_list');
+    ingredient.setAttribute('name', 'ingredients[]');
+    li.appendChild(ingredient);
+
+    var quantity = document.createElement("input");
+    quantity.setAttribute('type', 'text');
+    quantity.setAttribute('name', 'quantities[]');
+    quantity.setAttribute('placeholder', 'quantity');
+    li.appendChild(quantity);
+
+    var unit = document.createElement("input");
+    unit.setAttribute('type', 'text');
+    unit.setAttribute('name', 'units[]');
+    unit.setAttribute('placeholder', 'unit');
+    li.appendChild(unit);
+
+    ingredients.appendChild(li);
+  }
+</script>
+</html>

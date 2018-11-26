@@ -1,0 +1,52 @@
+<html>
+    <head>
+      <style>
+        body{
+          font-size: 15pt;
+          font-family: arial;
+        }
+        .block{
+          margin-bottom: 10px;
+        }
+        #error{
+          color: red;
+        }
+      </style>
+
+    </head>
+
+<body>
+  <h1>Saffron</h1>
+  <div>
+    <p>Need to include an ingredient that doesn't exist? Add one here.</p>
+    <form method="POST">
+      <div class="block">
+        <label for="ingredient_name">Ingredient Name</label>
+        <input type="text" name="ingredient_name" id="ingredient_name">
+      </div>
+      <div class="block">
+        <label for="food_type">Food Type</label>
+        <select name="food_type" id="food_type">
+          <option value="meat">Meat</option>
+          <option value="dairy">Dairy</option>
+          <option value="vegetable">Vegetable</option>
+          <option value="fruit">Fruit</option>
+          <option value="grain">Grain</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <input type="submit" value="Add Ingredient to Registry">
+      {% if error %}
+      <p id="error">{{error}}</p>
+      {% endif %}
+    </form>
+  </div>
+  <hr />
+  <h3>Existing ingredients</h3>
+  <ul>
+    {% for ingredient in ingredients %}
+    <li>{{ingredient.name}}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>

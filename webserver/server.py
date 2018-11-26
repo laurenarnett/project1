@@ -196,7 +196,7 @@ def recipe_page(name):
   ingredients_data = []
   for result in cursor:
     ingredients_data.append(result)
-    
+
     # count has no valid conversions
     if result.unit == 'count':
         continue
@@ -247,6 +247,95 @@ def addreview():
   g.conn.execute(text(cmd))
   return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
 
+@app.route("/publish", methods=['GET', 'POST'])
+def publish():
+  if not session.get('logged_in_as'):
+    return render_template('publish.html', error="Please sign in to publish a recipe.")
+
+  context = dict()
+  cursor = g.conn.execute("SELECT * FROM ingredients order by name;")
+  all_ingredients = []
+  for result in cursor:
+    if result['name'] == '%':
+      continue
+    all_ingredients.append(result)
+  cursor.close()
+  context['ingredients'] = all_ingredients
+  if request.method == 'POST':
+    recipe_name = request.form['recipe_name']
+    cuisine_type = request.form['cuisine_type']
+    meal_type = request.form['meal_type']
+    dietary_restriction = request.form['dietary_restriction']
+    ingredients = request.form.getlist('ingredients[]')
+    units = request.form.getlist('units[]')
+    quantities = request.form.getlist('quantities[]')
+    # verify arrays are all same length
+    if len(ingredients) != len(units) or len(units) != len(quantities) or len(ingredients) != len(quantities):
+      context['error'] = "Please populate the ingredient name, units, and quantities for each ingredient."
+      return render_template('publish.html', **context)
+    # verify recipe name doesn't already exist
+    cursor = g.conn.execute("SELECT * FROM recipes WHERE recipe_name='{}';".format(recipe_name))
+    if cursor.rowcount != 0:
+      context['error'] = "Recipe name already exists. Please choose another."
+      return render_template('publish.html', **context)
+    # verify all ingredients exist
+    all_ingredient_names = set([ingredient['name'] for ingredient in all_ingredients])
+    nonexistent_ingredients = [ing for ing in ingredients if ing not in all_ingredient_names]
+    if len(nonexistent_ingredients) != 0:
+      context['error'] = "You entered a non-existent ingredient. Please add it to the registry."
+      return render_template('publish.html', **context)
+    # verify meal type
+    if meal_type not in set(['breakfast', 'lunch', 'dinner', 'snack', 'dessert']):
+      context['error'] = "Invalid meal type."
+      return render_template('publish.html', **context)
+    # verify dietary restriction
+    if dietary_restriction not in set(['none', 'vegan', 'vegetarian']):
+      context['error'] = "Invalid dietary restriction."
+      return render_template('publish.html', **context)
+    # insert recipe
+    date_published = datetime.datetime.today().strftime('%Y-%m-%d')
+    g.conn.execute(
+      "INSERT INTO recipes(recipe_name, cuisine_type, meal_type, dietary_restriction, date_published, publisher_username) \
+      VALUES ('{}', '{}', '{}', '{}', '{}', '{}');".format(recipe_name, cuisine_type, meal_type, dietary_restriction, date_published, session.get('logged_in_as'))
+    )
+    # insert ingredients_list
+    values = []
+    for ing, unit, quantity in zip(ingredients, units, quantities):
+      if ingredients == "":
+        continue
+      values.append("('{}', {}, '{}', '{}')".format(unit, quantity, recipe_name, ing))
+    g.conn.execute(
+      "INSERT INTO ingredients_list(unit, quantity, recipe_name, ingredient_name)\
+      VALUES {};".format(','.join(values))
+    )
+    # redirect to recipe page
+    return redirect('/recipe_page/'+recipe_name.replace(" ", "_"))
+  else:
+    return render_template('publish.html', **context)
+
+@app.route("/ingredients", methods=['GET', 'POST'])
+def ingredients():
+  if request.method == 'POST':
+    # redirect to ingredients page
+    name = request.form['ingredient_name']
+    food_type = request.form['food_type']
+    # check that name isn't already taken
+    cursor = g.conn.execute("SELECT * FROM ingredients WHERE name='{}'".format(name))
+    if cursor.rowcount != 0:
+      return redirect('/ingredients')
+
+    # insert
+    g.conn.execute("INSERT INTO ingredients(name, food_type) VALUES ('{}', '{}')".format(name, food_type))
+    return redirect('/ingredients')
+  else:
+    cursor = g.conn.execute("SELECT * FROM ingredients order by name;")
+    ingredients = []
+    for result in cursor:
+      if result['name'] == '%':
+        continue
+      ingredients.append(result)
+    cursor.close()
+    return render_template('ingredients.html', ingredients=ingredients)
 
 if __name__ == "__main__":
   import click
