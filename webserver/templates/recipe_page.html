@@ -20,7 +20,7 @@
 </header>
 <body>
   <h1>{{recipe_data.recipe_name}}</h1>
-    
+
 <div>
   <p>Published by <a href={{'/profile/' + recipe_data.publisher_username}}>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}}</p>
 
@@ -62,15 +62,14 @@
   <div>
     <h2>Ingredients</h2>
     {% for ingredient in ingredients_data %}
-      <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
-      {% with conversions = conversions[ingredient.ingredient_name] %} 
+      {% with conversions = conversions[ingredient.ingredient_name] %}
         {% include 'ingredient_card.html' %}
       {% endwith %}
     {% endfor %}
   </div>
   <div>
     <form method="POST" action="/addreview">
-      <h2>Write a review</h2> 
+      <h2>Write a review</h2>
       <p>Rating (1-10): <input type="number" name="rating" min="1" max="10" step="1"></p>
       <p>Review: <input type="text" name="review">
 

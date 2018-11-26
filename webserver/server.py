@@ -158,19 +158,22 @@ def profile(name):
   context = dict()
 
   # get user information
-  cursor = g.conn.execute("SELECT name,username FROM users WHERE username='" + name + "'")
+  query = text("SELECT name, username FROM users WHERE username=:username;")
+  cursor = g.conn.execute(query, username=name)
   user_info = cursor.fetchone()
   cursor.close()
 
   # get recipes this user has published
-  cursor = g.conn.execute("SELECT * FROM recipes WHERE publisher_username='" + name + "'")
+  query = text("SELECT * FROM recipes WHERE publisher_username=:username;")
+  cursor = g.conn.execute(query, username=name)
   recipes = []
   for result in cursor:
       recipes.append(result)
   cursor.close()
 
-  cursor = g.conn.execute("SELECT r.* FROM recipes r INNER JOIN bookmarks b\
-                            ON r.recipe_name = b.recipe_name WHERE b.username='" + name + "'")
+  query = text("SELECT r.* FROM recipes r INNER JOIN bookmarks b \
+              ON r.recipe_name = b.recipe_name WHERE b.username=:username;")
+  cursor = g.conn.execute(query, username=name)
   bookmarks = []
   for result in cursor:
       bookmarks.append(result)
@@ -180,9 +183,9 @@ def profile(name):
     # get username
     username = session.get("logged_in_as")
     context['username'] = username
-    cursor = g.conn.execute("SELECT subscribee_username FROM subscriptions subs\
-            WHERE subscriber_username = '{}' and subscribee_username\
-            = '{}'".format(username, user_info.username))
+    query = text("SELECT subscribee_username FROM subscriptions subs\
+            WHERE subscriber_username=:username and subscribee_username=:other_username;")
+    cursor = g.conn.execute(query, username=username, other_username=user_info.username)
     result = cursor.fetchone()
     cursor.close()
     context['subs'] = result
@@ -205,22 +208,23 @@ def account_settings(name):
 
     # get subscriptions
     subs = []
-    cursor = g.conn.execute(("SELECT * FROM subscriptions WHERE\
-      subscriber_username = '{}'").format(name))
+    query = text("SELECT * FROM subscriptions WHERE subscriber_username=:username;")
+    cursor = g.conn.execute(query, username=name)
     for result in cursor:
       subs.append(result)
     cursor.close()
     # get bookmarks
     books = []
-    cursor = g.conn.execute(("SELECT * FROM bookmarks WHERE\
-      username = '{}'").format(name))
+    query = text("SELECT * FROM bookmarks WHERE username=:username;")
+    cursor = g.conn.execute(query, username=name)
     for result in cursor:
       books.append(result)
     cursor.close()
 
     # get published recipes
     recipes=[]
-    cursor = g.conn.execute(("SELECT * FROM recipes WHERE publisher_username= '{}'").format(name))
+    query = text("SELECT * FROM recipes WHERE publisher_username=:username;")
+    cursor = g.conn.execute(query, username=name)
     for result in cursor:
       recipes.append(result)
     cursor.close
@@ -238,14 +242,15 @@ def recipe_page(name):
   context['conversions'] = dict()
 
   # get recipe data
-  cursor = g.conn.execute("SELECT * from recipes WHERE recipe_name = '" + name.replace("_", " ") + "'")
+  query = text("SELECT * FROM recipes WHERE recipe_name=:recipe_name;")
+  cursor = g.conn.execute(query, recipe_name=name.replace("_", " "))
   recipe_data = cursor.fetchone()
   cursor.close()
 
   # get ingredients data
-  cursor = g.conn.execute("SELECT l.*\
-            from ingredients_list l inner join recipes r on\
-            r.recipe_name=l.recipe_name WHERE r.recipe_name = '" + name.replace("_", " ") + "'")
+  query = text("SELECT l.* FROM ingredients_list l INNER JOIN recipes r on\
+                r.recipe_name=l.recipe_name WHERE r.recipe_name=:recipe_name;")
+  cursor = g.conn.execute(query, recipe_name=name.replace("_", " "))
   ingredients_data = []
   for result in cursor:
     ingredients_data.append(result)
@@ -272,11 +277,13 @@ def recipe_page(name):
   cursor.close()
 
   # get reviews data
-  cursor = g.conn.execute("SELECT rev.* FROM reviews rev \
-            INNER JOIN recipes r on\
-            r.recipe_name=rev.recipe_name WHERE r.recipe_name = '"
-            + name.replace("_", " ") +
-            "' ORDER BY date_published DESC")
+  query = text(
+    "SELECT rev.* FROM reviews rev \
+    INNER JOIN recipes r on\
+    r.recipe_name=rev.recipe_name WHERE r.recipe_name=:recipe_name\
+    ORDER BY date_published DESC;"
+  )
+  cursor = g.conn.execute(query, recipe_name=name.replace("_", " "))
   reviews = []
   for result in cursor:
       reviews.append(result)
@@ -288,17 +295,17 @@ def recipe_page(name):
     context['logged_in_as'] = username
 
     # get subscriptions
-    cursor = g.conn.execute("SELECT subscribee_username FROM subscriptions\
-            WHERE subscriber_username = '{}' and subscribee_username\
-            = '{}'".format(username, recipe_data.publisher_username))
+    query = text("SELECT subscribee_username FROM subscriptions\
+                  WHERE subscriber_username=:username and subscribee_username\
+                  =:other_username;")
+    cursor = g.conn.execute(query, username=username, other_username=recipe_data.publisher_username)
     result = cursor.fetchone()
     cursor.close()
     context['subs'] = result
 
     # get bookmarks
-    cursor = g.conn.execute("SELECT recipe_name FROM bookmarks\
-            WHERE username='{}' and recipe_name\
-            = '{}'".format(username, recipe_data.recipe_name))
+    query = text("SELECT recipe_name FROM bookmarks WHERE username=:username and recipe_name=:recipe_name;")
+    cursor = g.conn.execute(query, username=username, recipe_name=recipe_data.recipe_name)
     result = cursor.fetchone()
     context['bookmarks'] = result
     cursor.close()
@@ -479,7 +486,7 @@ def ingredients():
       return redirect('/ingredients')
 
     # insert
-    query = "INSERT INTO ingredients(name, food_type) VALUES (:name, :food_type);"
+    query = text("INSERT INTO ingredients(name, food_type) VALUES (:name, :food_type);")
     g.conn.execute(query, name=name, food_type=food_type)
     return redirect('/ingredients')
   else:
