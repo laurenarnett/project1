@@ -202,14 +202,24 @@ def account_settings(name):
     # get username
     username = session.get("logged_in_as")
     context['logged_in_as'] = username
+
+  # get subscriptions
   subs = []
   cursor = g.conn.execute(("SELECT * FROM subscriptions WHERE\
     subscriber_username = '{}'").format(name))
   for result in cursor:
     subs.append(result)
   cursor.close()
+  # get bookmarks
+  books = []
+  cursor = g.conn.execute(("SELECT * FROM bookmarks WHERE\
+    username = '{}'").format(name))
+  for result in cursor:
+    books.append(result)
+  cursor.close()
 
   context['subs'] = subs
+  context['books'] = books
   return render_template('account_settings.html', **context)
 
 
@@ -245,7 +255,7 @@ def recipe_page(name):
   if session.get("logged_in_as"):
     # get username
     username = session.get("logged_in_as")
-    context['username'] = username
+    context['logged_in_as'] = username
 
     # get subscriptions
     cursor = g.conn.execute("SELECT subscribee_username FROM subscriptions\
@@ -332,6 +342,20 @@ def removesub():
     )
     return redirect("/{}".format(request.form.get('loc')))
 
+@app.route('/remove_bookmark', methods=['POST'])
+def removebookmark():
+  if session.get("logged_in_as"):
+    # get username
+    username = session.get("logged_in_as")
+    recipe_name = request.form.get('recipe_name')
+
+    # remove from subscriptions table
+    g.conn.execute(
+      "DELETE FROM bookmarks\
+      WHERE username = '{}' AND recipe_name = '{}';"\
+      .format(username, recipe_name)
+    )
+    return redirect("/{}".format(request.form.get('loc')))
 if __name__ == "__main__":
   import click
 
