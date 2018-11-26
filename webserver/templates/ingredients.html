@@ -16,7 +16,12 @@
     </head>
 
 <body>
-  <h1>Saffron</h1>
+  <h1><a href='/'>Saffron</a></h1>
+  {% if logged_in_as %}
+    <h4>Hello, {{logged_in_as}}. <a href="/publish">Publish</a> | <a href="#">Account Settings</a> | <a href="/logout">Logout</a></h4>
+  {% else %}
+    <h4><a href="/signup">Sign Up</a> | <a href="/login">Login</a></h4>
+  {% endif %}
   <div>
     <p>Need to include an ingredient that doesn't exist? Add one here.</p>
     <form method="POST">

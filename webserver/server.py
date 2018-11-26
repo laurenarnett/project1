@@ -253,6 +253,7 @@ def publish():
     return render_template('publish.html', error="Please sign in to publish a recipe.")
 
   context = dict()
+  context['logged_in_as'] = session.get('logged_in_as')
   cursor = g.conn.execute("SELECT * FROM ingredients order by name;")
   all_ingredients = []
   for result in cursor:
@@ -335,7 +336,7 @@ def ingredients():
         continue
       ingredients.append(result)
     cursor.close()
-    return render_template('ingredients.html', ingredients=ingredients)
+    return render_template('ingredients.html', ingredients=ingredients, logged_in_as=session.get('logged_in_as'))
 
 if __name__ == "__main__":
   import click
