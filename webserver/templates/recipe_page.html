@@ -22,7 +22,7 @@
   <h1>{{recipe_data.recipe_name}}</h1>
     
 <div>
-  <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}} </p>      
+  <p>Published by <a href={{'/profile/' + recipe_data.publisher_username}}>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}}</p>
 
   {% if logged_in_as and bookmarks %}
     <p>Bookmarked!</p>
@@ -63,6 +63,9 @@
     <h2>Ingredients</h2>
     {% for ingredient in ingredients_data %}
       <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}</p>
+      {% with conversions = conversions[ingredient.ingredient_name] %} 
+        {% include 'ingredient_card.html' %}
+      {% endwith %}
     {% endfor %}
   </div>
   <div>

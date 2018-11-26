@@ -1,0 +1,14 @@
+<div>
+  <p>{{ingredient.ingredient_name}}, {{ingredient.quantity}} {{ingredient.unit}}
+  {% if conversions %}
+      <div>
+          <select id="target">
+            <option value="">Conversions...</option>
+            {% for convert in conversions %}
+              <option value="{{convert.to_unit}}">{{convert.res}} {{convert.to_unit}}</option>
+            {% endfor %}
+        </select>
+      </div>
+  {% endif %}
+  </p>
+</div>
