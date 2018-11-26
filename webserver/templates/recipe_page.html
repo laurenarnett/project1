@@ -12,9 +12,9 @@
 <header>
   <h1><a href='/'>Saffron</a></h1>
 
-  {% if username %}
+  {% if logged_in_as %}
       <p style="text-align:left;"><a href='#'>Publish new recipe</a>
-      <span style="float:right;"><a href={{'/account_settings/' + username}} >Account Settings</a></span> </p>
+      <span style="float:right;"><a href={{'/account_settings/' + logged_in_as}} >Account Settings</a></span> </p>
   {% endif %}
 
 </header>
@@ -24,18 +24,16 @@
 <div>
   <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}} </p>      
 
-  {% if username and bookmarks %}
+  {% if logged_in_as and bookmarks %}
     <p>Bookmarked!</p>
   {% endif %}
-  {% if username and subs %}
-    <p>Subscribed!</p>
-  {% endif %}
 
-  {% if username and not bookmarks %}
+  {% if logged_in_as and not bookmarks %}
     {% with loc = 'recipe_page/' + recipe_data.recipe_name.replace(" ", "_") %}
       <div>
         <form method="POST" action="/bookmark">
             <div class="button">
+            <input type="hidden" name="bookmark_activity" value="Add">
             <input type="hidden" name="recipe_name" value="{{recipe_data.recipe_name}}">
             <input type="hidden" name="loc" value={{loc}}>
             <input type="submit" value="Bookmark">
@@ -45,7 +43,11 @@
     {% endwith %}
   {% endif %}
 
-  {% if username and not subs %}
+  {% if logged_in_as and subs %}
+    <p>Subscribed!</p>
+  {% endif %}
+
+  {% if logged_in_as and not subs %}
     {% with loc = 'recipe_page/' + recipe_data.recipe_name.replace(" ", "_") %}
       {% set author_username=recipe_data.publisher_username %}
       {% include 'subscription_card.html' %}
@@ -70,7 +72,7 @@
       <p>Review: <input type="text" name="review">
 
       <!-- TODO: change value to login username -->
-      <input type="hidden" name="author_username" value={{username}}>
+      <input type="hidden" name="author_username" value={{logged_in_as}}>
       <input type="hidden" name="recipe_name" value="{{recipe_data.recipe_name}}">
 
       <input type="submit" value="Add"></p>

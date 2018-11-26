@@ -16,9 +16,10 @@
      <h3>Subscriptions</h3>
      {% for sub in subs %}
        <p><a href={{'/profile/' + sub.subscribee_username}}>{{sub.subscribee_username}}</a></p>
-       <form method="POST" action="/remove_sub">
+       <form method="POST" action="/subscribe">
          <div class="button">
            {% with loc='account_settings/' + logged_in_as %}
+             <input type="hidden" name="subscribe_activity" value="Remove">
              <input type="hidden" name="username" value={{logged_in_as}}>
              <input type="hidden" name="subscribee_username" value={{sub.subscribee_username}}>
              <input type="hidden" name="loc" value={{loc}}>
@@ -31,11 +32,11 @@
    <div>
      <h3>Bookmarks</h3>
      {% for book in books %}
-       <p>{{book}}</p>
-       <p><a href={{'/recipe_page/' + book.recipe_name}}>{{book.recipe_name}}</a></p>
-       <form method="POST" action="/remove_bookmark">
+       <p><a href={{'/recipe_page/' + book.recipe_name.replace(" ","_")}}>{{book.recipe_name}}</a></p>
+       <form method="POST" action="/bookmark">
          <div class="button">
            {% with loc='account_settings/' + logged_in_as %}
+             <input type="hidden" name="bookmark_activity" value="Remove">
              <input type="hidden" name="username" value={{logged_in_as}}>
              <input type="hidden" name="recipe_name" value="{{book.recipe_name}}">
              <input type="hidden" name="loc" value={{loc}}>
@@ -44,6 +45,21 @@
          </div>
        </form>
      {% endfor %}
+   </div>
+   <div>
+       {% for recipe in recipes %}
+         {% include 'recipe_card.html' %}
+         <form method="POST" action="/delete_recipe">
+            <div class="button">
+              {% with loc='account_settings/' + logged_in_as %}
+                <input type="hidden" name="username" value={{logged_in_as}}>
+                <input type="hidden" name="recipe_name" value="{{recipe.recipe_name}}">
+                <input type="hidden" name="loc" value={{loc}}>
+                <input type="submit" value="Delete">
+              {% endwith %}
+            </div>
+         </form>
+       {% endfor %}
    </div>
  </body>
 </html>

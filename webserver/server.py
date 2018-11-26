@@ -196,31 +196,36 @@ def account_settings(name):
     username = session.get("logged_in_as")
     if username != name:
       return redirect("/")
-  context = dict()
-
-  if session.get("logged_in_as"):
-    # get username
-    username = session.get("logged_in_as")
+    context = dict()
     context['logged_in_as'] = username
 
-  # get subscriptions
-  subs = []
-  cursor = g.conn.execute(("SELECT * FROM subscriptions WHERE\
-    subscriber_username = '{}'").format(name))
-  for result in cursor:
-    subs.append(result)
-  cursor.close()
-  # get bookmarks
-  books = []
-  cursor = g.conn.execute(("SELECT * FROM bookmarks WHERE\
-    username = '{}'").format(name))
-  for result in cursor:
-    books.append(result)
-  cursor.close()
+    # get subscriptions
+    subs = []
+    cursor = g.conn.execute(("SELECT * FROM subscriptions WHERE\
+      subscriber_username = '{}'").format(name))
+    for result in cursor:
+      subs.append(result)
+    cursor.close()
+    # get bookmarks
+    books = []
+    cursor = g.conn.execute(("SELECT * FROM bookmarks WHERE\
+      username = '{}'").format(name))
+    for result in cursor:
+      books.append(result)
+    cursor.close()
 
-  context['subs'] = subs
-  context['books'] = books
-  return render_template('account_settings.html', **context)
+    # get published recipes
+    recipes=[]
+    cursor = g.conn.execute(("SELECT * FROM recipes WHERE publisher_username= '{}'").format(name))
+    for result in cursor:
+      recipes.append(result)
+    cursor.close
+
+    context['subs'] = subs
+    context['books'] = books
+    context['recipes'] = recipes
+
+    return render_template('account_settings.html', **context)
 
 
 @app.route('/recipe_page/<name>')
@@ -281,19 +286,30 @@ def recipe_page(name):
   return render_template('recipe_page.html', **context)
 
 @app.route('/subscribe', methods=['POST'])
-def addsubscription():
+def subscription():
   if session.get("logged_in_as"):
     # get username
     username = session.get("logged_in_as")
-    subscribee_username = request.form.get('author_username')
-    sub_type = request.form.get('subscription_type')
+    subscribe_activity = request.form.get('subscribe_activity')
+    if subscribe_activity == "Add":
+      subscribee_username = request.form.get('author_username')
+      sub_type = request.form.get('subscription_type')
+      # add to subscriptions table
+      g.conn.execute(
+        "INSERT INTO subscriptions(subscriber_username, subscribee_username, subscription_type)\
+         values ('{}','{}','{}');".format(username, subscribee_username, sub_type)
+      )
+      return redirect("/{}".format(request.form.get('loc')))
+    elif subscribe_activity == "Remove":
+      subscribee_username = request.form.get('subscribee_username')
 
-    # add to subscriptions table
-    g.conn.execute(
-      "INSERT INTO subscriptions(subscriber_username, subscribee_username, subscription_type)\
-       values ('{}','{}','{}');".format(username, subscribee_username, sub_type)
-    )
-    return redirect("/{}".format(request.form.get('loc')))
+      # remove from subscriptions table
+      g.conn.execute(
+        "DELETE FROM subscriptions \
+        WHERE subscriber_username = '{}' AND subscribee_username = '{}';"\
+        .format(username, subscribee_username)
+      )
+      return redirect("/{}".format(request.form.get('loc')))
   else:
     return redirect("/signup")
 
@@ -303,16 +319,28 @@ def addbookmark():
     # get username
     username = session.get("logged_in_as")
     recipe_name = request.form.get('recipe_name')
+    bookmark_activity = request.form.get('bookmark_activity')
+    if bookmark_activity == "Add":
+   
+      # add to subscriptions table
+      g.conn.execute(
+        "INSERT INTO bookmarks(username, recipe_name)\
+         values ('{}','{}');".format(username, recipe_name)
+      )
+      return redirect("/{}".format(request.form.get('loc')))
 
-    # add to subscriptions table
-    g.conn.execute(
-      "INSERT INTO bookmarks(username, recipe_name)\
-       values ('{}','{}');".format(username, recipe_name)
-    )
-    return redirect("/{}".format(request.form.get('loc')))
+    elif bookmark_activity =="Remove":
+      # remove from subscriptions table
+      g.conn.execute(
+        "DELETE FROM bookmarks\
+        WHERE username = '{}' AND recipe_name = '{}';"\
+        .format(username, recipe_name)
+      )
+      return redirect("/{}".format(request.form.get('loc')))
+
   else:
     return redirect("/signup")
-  
+
 @app.route('/addreview', methods=['POST'])
 def addreview():
   review = request.form['review']
@@ -327,35 +355,20 @@ def addreview():
   g.conn.execute(text(cmd))
   return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
 
-@app.route('/remove_sub', methods=['POST'])
-def removesub():
-  if session.get("logged_in_as"):
-    # get username
-    subscriber_username = session.get("logged_in_as")
-    subscribee_username = request.form.get('subscribee_username')
-
-    # remove from subscriptions table
-    g.conn.execute(
-      "DELETE FROM subscriptions \
-      WHERE subscriber_username = '{}' AND subscribee_username = '{}';"\
-      .format(subscriber_username, subscribee_username)
-    )
-    return redirect("/{}".format(request.form.get('loc')))
-
-@app.route('/remove_bookmark', methods=['POST'])
-def removebookmark():
+@app.route('/delete_recipe',methods=['POST'])
+def deleterecipe():
+  recipe_name = request.form['recipe_name']
   if session.get("logged_in_as"):
     # get username
     username = session.get("logged_in_as")
-    recipe_name = request.form.get('recipe_name')
+    if username == request.form['username']:
+      cmd = "DELETE FROM recipes WHERE recipe_name = '{}' and\
+      publisher_username = '{}'".format(recipe_name, username)
+      g.conn.execute(cmd)
+      return redirect('/{}'.format(request.form['loc']))
+  else:
+        return redirect('/login')
 
-    # remove from subscriptions table
-    g.conn.execute(
-      "DELETE FROM bookmarks\
-      WHERE username = '{}' AND recipe_name = '{}';"\
-      .format(username, recipe_name)
-    )
-    return redirect("/{}".format(request.form.get('loc')))
 if __name__ == "__main__":
   import click
 
