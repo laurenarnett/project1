@@ -18,7 +18,7 @@
 <body>
   <h1><a href='/'>Saffron</a></h1>
   {% if logged_in_as %}
-    <h4>Hello, {{logged_in_as}}. <a href="/publish">Publish</a> | <a href="#">Account Settings</a> | <a href="/logout">Logout</a></h4>
+    <h4>Hello, {{logged_in_as}}. <a href="/publish">Publish</a> | <a href={{'/account_settings/' + logged_in_as}}>Account Settings</a> | <a href="/logout">Logout</a></h4>
     <hr />
     <div>
       <form method="POST">
