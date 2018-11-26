@@ -9,14 +9,36 @@
 
     </head>
 
+<header>
+  <h1><a href='/'>Saffron</a></h1>
+  <p style="text-align:left;"><a href='#'>Publish new recipe</a>
+  <span style="float:right;"><a href='#'>Account Settings</a></span> </p>
+</header>
 <body>
-    <h1>{{recipe_data.recipe_name}}</h1>
+  <h1>{{recipe_data.recipe_name}}</h1>
     
 <div>
   <p>Published by <a href='#'>{{recipe_data.publisher_username}}</a> on {{recipe_data.date_published}} </p>      
 
   {% if username and subs %}
     <p>Subscribed!</p>
+  {% endif %}
+  {% if username and bookmarks %}
+    <p>Bookmarked!</p>
+  {% endif %}
+
+  {% if username and not bookmarks %}
+    {% with loc = 'recipe_page/' + recipe_data.recipe_name.replace(" ", "_") %}
+      <div>
+        <form method="POST" action="/bookmark">
+            <div class="button">
+            <input type="hidden" name="recipe_name" value="{{recipe_data.recipe_name}}">
+            <input type="hidden" name="loc" value={{loc}}>
+            <input type="submit" value="Bookmark">
+            </div>
+        </form>
+      </div>
+    {% endwith %}
   {% endif %}
 
   {% if username and not subs %}
