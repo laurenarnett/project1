@@ -368,8 +368,6 @@ def addbookmark():
 
 @app.route('/addreview', methods=['POST'])
 def addreview():
-  # TODO: Check that user is logged in
-  # TODO: Check that user hasn't already made a review to this recipe
   review = request.form['review']
   rating = request.form['rating']
   author_username = request.form['author_username']
