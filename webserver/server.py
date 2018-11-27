@@ -327,20 +327,17 @@ def subscription():
       subscribee_username = request.form.get('author_username')
       sub_type = request.form.get('subscription_type')
       # add to subscriptions table
-      g.conn.execute(
-        "INSERT INTO subscriptions(subscriber_username, subscribee_username, subscription_type)\
-         values ('{}','{}','{}');".format(username, subscribee_username, sub_type)
-      )
+      query = text("INSERT INTO subscriptions(subscriber_username, subscribee_username, subscription_type)\
+                    VALUES (:username, :subscribee_username, :sub_type);")
+      g.conn.execute(query, username=username, subscribee_username=subscribee_username, sub_type=sub_type)
       return redirect("/{}".format(request.form.get('loc')))
     elif subscribe_activity == "Remove":
       subscribee_username = request.form.get('subscribee_username')
 
       # remove from subscriptions table
-      g.conn.execute(
-        "DELETE FROM subscriptions \
-        WHERE subscriber_username = '{}' AND subscribee_username = '{}';"\
-        .format(username, subscribee_username)
-      )
+      query = text("DELETE FROM subscriptions WHERE subscriber_username=:username AND subscribee_username=:subscribee_username;")
+      g.conn.execute(query, username=username, subscribee_username=subscribee_username)
+
       return redirect("/{}".format(request.form.get('loc')))
   else:
     return redirect("/signup")
@@ -355,19 +352,15 @@ def addbookmark():
     if bookmark_activity == "Add":
 
       # add to subscriptions table
-      g.conn.execute(
-        "INSERT INTO bookmarks(username, recipe_name)\
-         values ('{}','{}');".format(username, recipe_name)
-      )
+      query = text("INSERT INTO bookmarks(username, recipe_name)\
+                    VALUES (:username, :recipe_name);")
+      g.conn.execute(query, username=username, recipe_name=recipe_name)
       return redirect("/{}".format(request.form.get('loc')))
 
     elif bookmark_activity =="Remove":
       # remove from subscriptions table
-      g.conn.execute(
-        "DELETE FROM bookmarks\
-        WHERE username = '{}' AND recipe_name = '{}';"\
-        .format(username, recipe_name)
-      )
+      query = text("DELETE FROM bookmarks WHERE username=:username AND recipe_name=:recipe_name;")
+      g.conn.execute(query, username=username, recipe_name=recipe_name)
       return redirect("/{}".format(request.form.get('loc')))
 
   else:
@@ -375,16 +368,17 @@ def addbookmark():
 
 @app.route('/addreview', methods=['POST'])
 def addreview():
+  # TODO: Check that user is logged in
+  # TODO: Check that user hasn't already made a review to this recipe
   review = request.form['review']
   rating = request.form['rating']
   author_username = request.form['author_username']
   recipe_name = request.form['recipe_name']
   date_published = datetime.datetime.today().strftime('%Y-%m-%d')
 
-  cmd = "INSERT INTO reviews VALUES ('" \
-            + review + "'," + str(rating) + ",'" + date_published + "','"\
-            + author_username + "','" + recipe_name + "')"
-  g.conn.execute(text(cmd))
+  query = text("INSERT INTO reviews VALUES (:review, :rating, :date_published, :author_username, :recipe_name);")
+  g.conn.execute(query, review=review, rating=str(rating), date_published=date_published,
+                author_username=author_username, recipe_name=recipe_name)
   return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
 
 @app.route('/delete_recipe',methods=['POST'])
@@ -394,12 +388,12 @@ def deleterecipe():
     # get username
     username = session.get("logged_in_as")
     if username == request.form['username']:
-      cmd = "DELETE FROM recipes WHERE recipe_name = '{}' and\
-      publisher_username = '{}'".format(recipe_name, username)
-      g.conn.execute(cmd)
+      query = text("DELETE FROM recipes WHERE recipe_name=:recipe_name and\
+      publisher_username=:publisher_username;")
+      g.conn.execute(query, recipe_name=recipe_name, publisher_username=username)
       return redirect('/{}'.format(request.form['loc']))
   else:
-        return redirect('/login')
+    return redirect('/login')
 
 @app.route("/publish", methods=['GET', 'POST'])
 def publish():
@@ -428,6 +422,10 @@ def publish():
     if len(ingredients) != len(units) or len(units) != len(quantities) or len(ingredients) != len(quantities):
       context['error'] = "Please populate the ingredient name, units, and quantities for each ingredient."
       return render_template('publish.html', **context)
+    # verify quantities are all floats
+    if not all([q.replace('.','',1).isdigit() for q in quantities]):
+      context['error'] = "Please specify float (i.e. decimal number) quantities for each ingredient."
+      return render_template('publish.html', **context)
     # verify recipe name doesn't already exist
     query = text("SELECT * FROM recipes WHERE recipe_name=:recipe_name;")
     cursor = g.conn.execute(query, recipe_name=recipe_name)
@@ -450,8 +448,8 @@ def publish():
       return render_template('publish.html', **context)
     # insert recipe
     date_published = datetime.datetime.today().strftime('%Y-%m-%d')
-    query = "INSERT INTO recipes(recipe_name, cuisine_type, meal_type, dietary_restriction, date_published, publisher_username) \
-            VALUES (:recipe_name, :cuisine_type, :meal_type, :dietary_restriction, :date_published, :publisher_username);"
+    query = text("INSERT INTO recipes(recipe_name, cuisine_type, meal_type, dietary_restriction, date_published, publisher_username) \
+            VALUES (:recipe_name, :cuisine_type, :meal_type, :dietary_restriction, :date_published, :publisher_username);")
     g.conn.execute(query,
       recipe_name=recipe_name, cuisine_type=cuisine_type, meal_type=meal_type,
       dietary_restriction=dietary_restriction, date_published=date_published,
@@ -459,15 +457,12 @@ def publish():
     )
 
     # insert ingredients_list
-    values = []
     for ing, unit, quantity in zip(ingredients, units, quantities):
       if ingredients == "":
         continue
-      values.append("('{}', {}, '{}', '{}')".format(unit, quantity, recipe_name, ing))
-    g.conn.execute(
-      "INSERT INTO ingredients_list(unit, quantity, recipe_name, ingredient_name)\
-      VALUES {};".format(','.join(values))
-    )
+      query = text("INSERT INTO ingredients_list(unit, quantity, recipe_name, ingredient_name)\
+        VALUES (:unit, :quantity, :recipe_name, :ing);")
+      g.conn.execute(query, unit=unit, quantity=quantity, recipe_name=recipe_name, ing=ing)
     # redirect to recipe page
     return redirect('/recipe_page/'+recipe_name.replace(" ", "_"))
   else:
@@ -502,7 +497,10 @@ def ingredients():
 @app.route("/search")
 def search():
   query = request.args['query']
-  cursor = g.conn.execute(text("SELECT * FROM recipes WHERE LOWER(recipe_name) LIKE '%{}%';".format(query.lower())))
+  cursor = g.conn.execute(
+    text("SELECT * FROM recipes WHERE LOWER(recipe_name) LIKE CONCAT('%', :query, '%');"),
+    query=query.lower()
+  )
   context = dict()
   recipes = []
   for result in cursor:
