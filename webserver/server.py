@@ -4,7 +4,7 @@ import datetime
 import re
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, session
+from flask import Flask, request, render_template, g, redirect, Response, session, flash
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -371,6 +371,13 @@ def addreview():
   author_username = request.form['author_username']
   recipe_name = request.form['recipe_name']
   date_published = datetime.datetime.today().strftime('%Y-%m-%d')
+
+  res = g.conn.execute("SELECT * FROM reviews WHERE author_username = '{}' \
+          and recipe_name = '{}'".format(author_username, recipe_name)).fetchone() 
+  if res != None:
+      flash("You have already posted a review on this recipe.")
+      return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
+
 
   cmd = "INSERT INTO reviews VALUES ('" \
             + review + "'," + str(rating) + ",'" + date_published + "','"\

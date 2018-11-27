@@ -5,6 +5,9 @@
           font-size: 12pt;
           font-family: arial;
         }
+        #flashfail{
+          color: red;
+        }
       </style>
 
     </head>
@@ -19,6 +22,13 @@
 
 </header>
 <body>
+  {% with messages = get_flashed_messages() %}
+     {% if messages %}
+        {% for message in messages %}
+          <p id="flashfail">{{ message }}</p>
+        {% endfor %}
+     {% endif %}
+  {% endwith %}
   <h1>{{recipe_data.recipe_name}}</h1>
     
 <div>
