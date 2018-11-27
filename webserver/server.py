@@ -549,7 +549,7 @@ def update():
         return redirect("/{}".format(request.form.get('loc')))
     if request.form.get('diet'):
         diet = request.form.get('diet')
-        query = text("UPDATE users SET diet = (:diet) WHERE\
+        query = text("UPDATE users SET dietary_restriction = (:diet) WHERE\
                 username=(:logged_in_as);")
         g.conn.execute(query, diet=diet, logged_in_as=logged_in_as)
         return redirect("/{}".format(request.form.get('loc')))
