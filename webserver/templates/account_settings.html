@@ -47,6 +47,7 @@
      {% endfor %}
    </div>
    <div>
+      <h3>Recipes</h3>
        {% for recipe in recipes %}
          {% include 'recipe_card.html' %}
          <form method="POST" action="/delete_recipe">
