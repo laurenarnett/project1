@@ -432,6 +432,10 @@ def publish():
     if len(ingredients) != len(units) or len(units) != len(quantities) or len(ingredients) != len(quantities):
       context['error'] = "Please populate the ingredient name, units, and quantities for each ingredient."
       return render_template('publish.html', **context)
+    # verify all ingredients are unique
+    if len(set(ingredients)) != len(ingredients):
+      context['error'] = "Please use each ingredient at most once."
+      return render_template('publish.html', **context)
     # verify quantities are all floats
     if not all([q.replace('.','',1).isdigit() for q in quantities]):
       context['error'] = "Please specify float (i.e. decimal number) quantities for each ingredient."
