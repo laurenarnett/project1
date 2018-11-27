@@ -4,7 +4,7 @@ import datetime
 import re
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, session
+from flask import Flask, request, render_template, g, redirect, Response, session, flash
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -234,6 +234,8 @@ def account_settings(name):
     context['recipes'] = recipes
 
     return render_template('account_settings.html', **context)
+  else:
+    return redirect('/login')
 
 
 @app.route('/recipe_page/<name>')
@@ -374,6 +376,14 @@ def addreview():
   recipe_name = request.form['recipe_name']
   date_published = datetime.datetime.today().strftime('%Y-%m-%d')
 
+  query = text("SELECT * FROM reviews WHERE author_username=:author_username AND recipe_name=:recipe_name;")
+  res = g.conn.execute(query, author_username=author_username, recipe_name=recipe_name)\
+    .fetchone()
+  if res != None:
+      flash("You have already posted a review on this recipe.")
+      return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
+
+
   query = text("INSERT INTO reviews VALUES (:review, :rating, :date_published, :author_username, :recipe_name);")
   g.conn.execute(query, review=review, rating=str(rating), date_published=date_published,
                 author_username=author_username, recipe_name=recipe_name)
@@ -507,6 +517,40 @@ def search():
   context['recipes'] = recipes
   context['logged_in_as'] = session.get('logged_in_as')
   return render_template('search.html', **context)
+
+@app.route("/update",methods=["POST"])
+def update():
+    logged_in_as = session.get('logged_in_as')
+    if request.form.get('full_name'):
+        full_name = request.form.get('full_name')
+        query = text("UPDATE users SET name = (:full_name) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, full_name=full_name, logged_in_as=logged_in_as)
+        return redirect("/{}".format(request.form.get('loc')))
+    if request.form.get('password'):
+        password = request.form.get('password')
+        query = text("UPDATE users SET password = (:password) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, password=password, logged_in_as=logged_in_as)
+        return redirect("/{}".format(request.form.get('loc')))
+    if request.form.get('email'):
+        email= request.form.get('email')
+        query = text("UPDATE users SET email = (:email) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, email=email, logged_in_as=logged_in_as)
+        return redirect("/{}".format(request.form.get('loc')))
+    if request.form.get('zipcode'):
+        zipcode = request.form.get('zipcode')
+        query = text("UPDATE users SET zip_code = (:zipcode) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, zipcode=zipcode, logged_in_as=logged_in_as)
+        return redirect("/{}".format(request.form.get('loc')))
+    if request.form.get('diet'):
+        diet = request.form.get('diet')
+        query = text("UPDATE users SET diet = (:diet) WHERE\
+                username=(:logged_in_as);")
+        g.conn.execute(query, diet=diet, logged_in_as=logged_in_as)
+        return redirect("/{}".format(request.form.get('loc')))
 
 if __name__ == "__main__":
   import click

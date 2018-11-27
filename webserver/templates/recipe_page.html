@@ -5,6 +5,9 @@
           font-size: 12pt;
           font-family: arial;
         }
+        #flashfail{
+          color: red;
+        }
       </style>
 
     </head>
@@ -13,12 +16,19 @@
   <h1><a href='/'>Saffron</a></h1>
 
   {% if logged_in_as %}
-      <p style="text-align:left;"><a href='#'>Publish new recipe</a>
+      <p style="text-align:left;"><a href='/publish'>Publish new recipe</a>
       <span style="float:right;"><a href={{'/account_settings/' + logged_in_as}} >Account Settings</a></span> </p>
   {% endif %}
 
 </header>
 <body>
+  {% with messages = get_flashed_messages() %}
+     {% if messages %}
+        {% for message in messages %}
+          <p id="flashfail">{{ message }}</p>
+        {% endfor %}
+     {% endif %}
+  {% endwith %}
   <h1>{{recipe_data.recipe_name}}</h1>
 
 <div>
@@ -73,7 +83,6 @@
       <p>Rating (1-10): <input type="number" name="rating" min="1" max="10" step="1"></p>
       <p>Review: <input type="text" name="review">
 
-      <!-- TODO: change value to login username -->
       <input type="hidden" name="author_username" value={{logged_in_as}}>
       <input type="hidden" name="recipe_name" value="{{recipe_data.recipe_name}}">
 
