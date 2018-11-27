@@ -262,27 +262,25 @@ def recipe_page(name):
         continue
 
     # make vaild conversions for this ingredient
-    name = result.ingredient_name
+    ingredient_name = result.ingredient_name
     unit = result.unit
     quantity = result.quantity
     conversions_list = []
     convert_cursor = g.conn.execute(text("SELECT c.*, " + str(quantity) + "* c.multiplier AS res \
         FROM conversions c WHERE\
-        ingredient_name LIKE (CASE WHEN ('" + name + "' = 'water' OR '" + name\
-        + "' = 'flour' OR '" + name + "' = 'sugar' OR '" + name + "' = 'butter')\
-        THEN '" + name + "' ELSE '\%' END) AND from_unit = '" + unit.split('s')[0] + "'"))
+        ingredient_name LIKE (CASE WHEN ('" + ingredient_name + "' = 'water' OR '" + ingredient_name\
+        + "' = 'flour' OR '" + ingredient_name + "' = 'sugar' OR '" + ingredient_name + "' = 'butter')\
+        THEN '" + ingredient_name + "' ELSE '\%' END) AND from_unit = '" + unit.split('s')[0] + "'"))
     for convert_result in convert_cursor:
         conversions_list.append(convert_result)
-    context['conversions'][name] = conversions_list
+    context['conversions'][ingredient_name] = conversions_list
     convert_cursor.close()
-
   cursor.close()
 
   # get reviews data
   query = text(
-    "SELECT rev.* FROM reviews rev \
-    INNER JOIN recipes r on\
-    r.recipe_name=rev.recipe_name WHERE r.recipe_name=:recipe_name\
+    "SELECT rev.* FROM reviews rev, recipes r\
+    WHERE r.recipe_name=rev.recipe_name and r.recipe_name=:recipe_name\
     ORDER BY date_published DESC;"
   )
   cursor = g.conn.execute(query, recipe_name=name.replace("_", " "))
@@ -376,12 +374,16 @@ def addreview():
   recipe_name = request.form['recipe_name']
   date_published = datetime.datetime.today().strftime('%Y-%m-%d')
 
+  if len(rating) == 0 or len(review) == 0:
+    flash("Please making sure you have a rating and review before posting.")
+    return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
+
   query = text("SELECT * FROM reviews WHERE author_username=:author_username AND recipe_name=:recipe_name;")
   res = g.conn.execute(query, author_username=author_username, recipe_name=recipe_name)\
     .fetchone()
   if res != None:
-      flash("You have already posted a review on this recipe.")
-      return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
+    flash("You have already posted a review on this recipe.")
+    return redirect('/recipe_page/' + recipe_name.replace(" ", "_"))
 
 
   query = text("INSERT INTO reviews VALUES (:review, :rating, :date_published, :author_username, :recipe_name);")
